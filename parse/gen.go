@@ -8,6 +8,7 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+
 	"github.com/clementauger/sqlg/runtime"
 	"github.com/clementauger/sqlg/tpl"
 
@@ -284,7 +285,9 @@ func generateQueryTemplates(f FileObjects, engine, queryTemplates, rawQueries st
 		funcMap = pg.FuncMap()
 	}
 	out += fmt.Sprintf("var %v = map[string]*template.Template{\n", queryTemplates)
-	for key, query := range f.Queries(false) {
+	keys, queries := f.Queries(false)
+	for _, key := range keys {
+		query := queries[key]
 		tr, err := tpl.Transform(query, funcMap)
 		if err != nil {
 			return "", fmt.Errorf(
@@ -301,7 +304,9 @@ func generateQueryTemplates(f FileObjects, engine, queryTemplates, rawQueries st
 	out += "}\n\n"
 	// write the map of raw queries
 	out += fmt.Sprintf("var %v = map[string]string{\n", rawQueries)
-	for key, query := range f.Queries(true) {
+	keys, queries = f.Queries(true)
+	for _, key := range keys {
+		query := queries[key]
 		out += fmt.Sprintf("%q:%v,\n", key, query)
 	}
 	out += "}\n\n"
