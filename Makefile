@@ -1,4 +1,5 @@
 test:
+	go test github.com/clementauger/sqlg/tpl
 	go test github.com/clementauger/sqlg/example/first/sqlite
 	go test github.com/clementauger/sqlg/example/first/oracle
 	go test github.com/clementauger/sqlg/example/first/mssql
