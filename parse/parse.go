@@ -9,6 +9,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/ast/astutil"
@@ -189,19 +190,25 @@ func (f FileObjects) Imports() map[string]string {
 	return out
 }
 
-func (f FileObjects) Queries(raw bool) map[string]string {
+func (f FileObjects) Queries(raw bool) ([]string, map[string]string) {
 	out := map[string]string{}
+	var keys []string
 	for _, m := range f.Methods {
 		if m.Query == "" {
 			continue
 		}
 		if raw && len(m.InParams) < 1 {
-			out[m.Receiver.StructName+"__"+m.Name] = m.Query
+			name := m.Receiver.StructName + "__" + m.Name
+			out[name] = m.Query
+			keys = append(keys, name)
 		} else if !raw && len(m.InParams) > 0 {
-			out[m.Receiver.StructName+"__"+m.Name] = m.Query
+			name := m.Receiver.StructName + "__" + m.Name
+			out[name] = m.Query
+			keys = append(keys, name)
 		}
 	}
-	return out
+	sort.Strings(keys)
+	return keys, out
 }
 
 func validFunc(s string) bool {
