@@ -43,13 +43,13 @@ func (n NilCaseConverter) Convert(s string) string {
 	return s
 }
 
-type ToSnake struct {}
+type ToSnake struct{}
 
 func (n ToSnake) Convert(s string) string {
 	return strcase.ToSnake(s)
 }
 
-type ToCamel struct {}
+type ToCamel struct{}
 
 func (n ToCamel) Convert(s string) string {
 	return strcase.ToCamel(s)
