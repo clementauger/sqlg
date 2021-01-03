@@ -16,7 +16,7 @@ import (
 
 var queryTemplates942046 = map[string]*template.Template{
 	"myDatastore__CreateSomeValues": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO sometype ( {{cols .v "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals .v "id" "values" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.v | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+		`INSERT INTO sometype ( {{cols .v "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .v "id" "values" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.v | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
 	)),
 	"myDatastore__DeleteManyAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`DELETE FROM authors WHERE id ANY ( {{.ids | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}::int[] ) RETURNING *`,

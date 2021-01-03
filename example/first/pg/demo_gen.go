@@ -15,21 +15,6 @@ import (
 )
 
 var queryTemplatesb9d90b = map[string]*template.Template{
-	"myDatastore__GetSomeY": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM y`,
-	)),
-	"myDatastore__DeleteAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__DeleteAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | convert $.SQLGConverter | glue ","}} FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
 	"myDatastore__GetAuthorsWihNamedIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 	)),
@@ -40,9 +25,6 @@ var queryTemplatesb9d90b = map[string]*template.Template{
 		LIMIT {{.start | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.end | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}
 		`,
 	)),
-	"myDatastore__CreateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals .a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
-	)),
 	"myDatastore__CreateAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`INSERT INTO authors (bio)
 		VALUES
@@ -51,11 +33,29 @@ var queryTemplatesb9d90b = map[string]*template.Template{
 		{{end}}
 	`,
 	)),
+	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT {{cols .a "id" | prefix "alias." | convert $.SQLGConverter | glue ","}} FROM authors as alias WHERE alias.id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__DeleteAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
 	"myDatastore__GetAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 	)),
-	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | prefix "alias." | convert $.SQLGConverter | glue ","}} FROM authors as alias WHERE alias.id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT {{cols .a "id" | convert $.SQLGConverter | glue ","}} FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__GetSomeY": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT * FROM y`,
+	)),
+	"myDatastore__CreateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+	)),
+	"myDatastore__DeleteAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 	)),
 }
 
@@ -75,6 +75,9 @@ type MyDatastore struct {
 
 // MyDatastoreIface is an interface of MyDatastore
 type MyDatastoreIface interface {
+	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
+	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
+	DeleteManyAuthors(ctx context.Context, db sqlg.Querier, ids []int) (ab []model.Author, err error)
 	CreateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (id int64, err error)
 	CreateAuthors(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) (err error)
@@ -88,9 +91,6 @@ type MyDatastoreIface interface {
 	GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error)
 	GetSomeY(ctx context.Context, db sqlg.Querier, u model.Y) (param0 []model.Y, err error)
 	ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error)
-	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
-	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
-	DeleteManyAuthors(ctx context.Context, db sqlg.Querier, ids []int) (ab []model.Author, err error)
 }
 
 // AuthorIterator is an iterator of Author
