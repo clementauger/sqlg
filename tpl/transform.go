@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"reflect"
 	"strings"
-	"github.com/clementauger/sqlg/runtime"
 	"text/template"
 	"text/template/parse"
+
+	"github.com/clementauger/sqlg/runtime"
 
 	"fmt"
 )
@@ -73,14 +74,18 @@ var CommonFuncMap = map[string]interface{}{
 		}
 		panic("no such placeholder")
 	},
-	"vals": func(s interface{}, notFields ...string) (ret []interface{}) {
+	"vals": func(converter runtime.CaseConverter, s interface{}, notFields ...string) (ret []interface{}) {
 		r := reflect.ValueOf(s)
 		if r.Kind() == reflect.Struct {
 			for i := 0; i < r.NumField(); i++ {
 				f := r.Type().Field(i)
+				sf := f.Name
+				if converter != nil {
+					sf = converter.Convert(sf)
+				}
 				var ok bool = true
 				for _, not := range notFields {
-					if not == f.Name {
+					if not == sf {
 						ok = false
 						break
 					}
@@ -132,6 +137,9 @@ func (c colPrinting) String() string {
 	for i := 0; i < r.Type().NumField(); i++ {
 		f := r.Type().Field(i)
 		sf := f.Name
+		if c.converter != nil {
+			sf = c.converter.Convert(sf)
+		}
 		var ignore bool
 		for _, not := range c.not {
 			if sf == not {
@@ -140,9 +148,6 @@ func (c colPrinting) String() string {
 			}
 		}
 		if !ignore {
-			if c.converter != nil {
-				sf = c.converter.Convert(sf)
-			}
 			if c.alias != "" {
 				sf = c.alias + sf
 			}
@@ -245,16 +250,6 @@ func Transform(src string, funcs template.FuncMap) (string, error) {
 						"$", "SQLGConverter",
 					},
 				}
-				// placeholder := &parse.IdentifierNode{
-				// 	Ident: "placeholder",
-				// }
-				// flavor := &parse.VariableNode{
-				// 	NodeType: parse.NodeVariable,
-				// 	Ident: []string{
-				// 		"$", "SQLGFlavor",
-				// 	},
-				// }
-				//
 				cmd1 := &parse.CommandNode{}
 				cmd1.Args = append(cmd1.Args, convert, converter)
 				x.Pipe.Cmds = append(x.Pipe.Cmds, cmd1)
@@ -277,6 +272,31 @@ func Transform(src string, funcs template.FuncMap) (string, error) {
 		return true
 	}
 	visit(t.Tree.Root, transformColPrintings)
+
+	var transformValsPrintings func(n parse.Node) bool
+	transformValsPrintings = func(n parse.Node) bool {
+		if x, ok := n.(*parse.ActionNode); ok {
+
+			var shouldInclude bool
+			visit(x, hasIdentifier(&shouldInclude, "vals"))
+
+			if shouldInclude {
+
+				converter := &parse.VariableNode{
+					NodeType: parse.NodeVariable,
+					Ident: []string{
+						"$", "SQLGConverter",
+					},
+				}
+				t := append([]parse.Node{}, x.Pipe.Cmds[0].Args[1:]...)
+				x.Pipe.Cmds[0].Args = append(x.Pipe.Cmds[0].Args[:1], converter)
+				x.Pipe.Cmds[0].Args = append(x.Pipe.Cmds[0].Args, t...)
+
+			}
+		}
+		return true
+	}
+	visit(t.Tree.Root, transformValsPrintings)
 
 	return t.Tree.Root.String(), nil
 }
