@@ -124,10 +124,11 @@ To generate an update sql statements you can proceed with
 ```go
 func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
 	m.Exec(`UPDATE authors SET
-		{{range $sql, $value := fields .a "id"}}
-			{{$sql | print}} = {{$value}}
+		{{$fields := fields .a "id"}}
+		{{range $i, $field := $fields}}
+			{{$field.SQL | print}} = {{$field.Value}} {{comma $i (len $fields) }}
 		{{end}}
-		 WHERE id = {{.id}}`)
+		 WHERE id = {{.a.ID}}`)
 	return
 }
 ```
