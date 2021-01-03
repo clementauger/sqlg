@@ -75,9 +75,6 @@ type MyDatastore struct {
 
 // MyDatastoreIface is an interface of MyDatastore
 type MyDatastoreIface interface {
-	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
-	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
-	DeleteManyAuthors(ctx context.Context, db sqlg.Querier, ids []int) (ab []model.Author, err error)
 	CreateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (id int64, err error)
 	CreateAuthors(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) (err error)
@@ -91,6 +88,9 @@ type MyDatastoreIface interface {
 	GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error)
 	GetSomeY(ctx context.Context, db sqlg.Querier, u model.Y) (param0 []model.Y, err error)
 	ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error)
+	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
+	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
+	DeleteManyAuthors(ctx context.Context, db sqlg.Querier, ids []int) (ab []model.Author, err error)
 }
 
 // AuthorIterator is an iterator of Author
