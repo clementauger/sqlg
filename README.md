@@ -93,7 +93,7 @@ func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
 It becomes
 
 ```sql
-INSERT INTO authors ( id,bio ) VALUES ( ?,? )
+INSERT INTO authors ( bio ) VALUES ( ? )
 ```
 
 
