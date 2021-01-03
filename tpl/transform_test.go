@@ -1,9 +1,10 @@
 package tpl_test
 
 import (
+	"testing"
+
 	"github.com/clementauger/sqlg/tpl"
 	"github.com/clementauger/sqlg/tpl/pg"
-	"testing"
 )
 
 func TestTransform(t *testing.T) {
@@ -18,14 +19,26 @@ func TestTransform(t *testing.T) {
 	{{range $i, $a := .a}}
 	 ( {{$a.Bio}} ) {{comma $i (len $a) }}
 	{{end}}
-	{{.y | pqArray}}
-`,
+	{{.y | pqArray}}`,
 			out: `text
 	{{range $i, $a := .a}}
-	 ( {{$a.Bio | collect $.SQLGValues | placeholder $.SQLGFlavor}} ) {{comma $i (len $a)}}
+	 ( {{$a.Bio | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $a)}}
 	{{end}}
-	{{.y | pqArray | collect $.SQLGValues | placeholder $.SQLGFlavor}}
-`,
+	{{.y | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		},
+		input{
+			src: `UPDATE authors SET
+{{$fields := fields .a "id"}}
+{{range $i, $field := $fields}}
+	{{$field.SQL | print}} = {{$field.Value}} {{comma $i (len $fields) }}
+{{end}}
+WHERE id = {{.a.id}}`,
+			out: `UPDATE authors SET
+{{$fields := fields $.SQLGConverter .a "id"}}
+{{range $i, $field := $fields}}
+	{{$field.SQL | print}} = {{$field.Value | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
+{{end}}
+WHERE id = {{.a.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 		},
 	}
 
@@ -35,7 +48,7 @@ func TestTransform(t *testing.T) {
 			t.Fatalf("got unexpected error %v wanted %v", err, test.err)
 		}
 		if got != test.out {
-			t.Fatalf("got unexpected output %q wanted %q", got, test.out)
+			t.Fatalf("got\n%v\n\nwanted\n%v", got, test.out)
 		}
 	}
 }

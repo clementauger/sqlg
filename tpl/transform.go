@@ -100,6 +100,32 @@ var CommonFuncMap = map[string]interface{}{
 	},
 
 	// colunm printing
+	"fields": func(converter runtime.CaseConverter, v interface{}, notSQLFields ...string) []fieldAndValue {
+		fields := []fieldAndValue{}
+		r := reflect.ValueOf(v)
+		for i := 0; i < r.Type().NumField(); i++ {
+			f := r.Type().Field(i)
+			sf := f.Name
+			if converter != nil {
+				sf = converter.Convert(sf)
+			}
+			var ignore bool
+			for _, not := range notSQLFields {
+				if sf == not {
+					ignore = true
+					break
+				}
+			}
+			if !ignore {
+				fields = append(fields, fieldAndValue{
+					Prop:  f.Name,
+					SQL:   sf,
+					Value: r.Field(i).Interface(),
+				})
+			}
+		}
+		return fields
+	},
 	"cols": func(v interface{}, notSQLFields ...string) colPrinting {
 		return colPrinting{v: v, not: notSQLFields}
 	},
@@ -118,6 +144,12 @@ var CommonFuncMap = map[string]interface{}{
 
 	// raw print
 	"raw": func(x interface{}) interface{} { return x },
+}
+
+type fieldAndValue struct {
+	Prop  string
+	SQL   string
+	Value interface{}
 }
 
 type colPrinting struct {
@@ -194,7 +226,7 @@ func Transform(src string, funcs template.FuncMap) (string, error) {
 		if x, ok := n.(*parse.ActionNode); ok {
 
 			var hasIdent bool
-			visit(x, hasIdentifier(&hasIdent, "comma", "cols", "raw", "print", "printf"))
+			visit(x, hasIdentifier(&hasIdent, "comma", "cols", "raw", "print", "printf", "fields"))
 
 			if !hasIdent {
 				collect := &parse.IdentifierNode{
@@ -298,6 +330,47 @@ func Transform(src string, funcs template.FuncMap) (string, error) {
 	}
 	visit(t.Tree.Root, transformValsPrintings)
 
+	var transformFields func(n parse.Node) bool
+	transformFields = func(n parse.Node) bool {
+		// log.Printf("%T %v\n", n, n)
+
+		if x, ok := n.(*parse.PipeNode); ok {
+
+			var shouldInclude bool
+			visit(x, hasIdentifier(&shouldInclude, "fields"))
+
+			if shouldInclude {
+				converter := &parse.VariableNode{
+					NodeType: parse.NodeVariable,
+					Ident: []string{
+						"$", "SQLGConverter",
+					},
+				}
+				t := append([]parse.Node{}, x.Cmds[0].Args[1:]...)
+				x.Cmds[0].Args = append(x.Cmds[0].Args[:1], converter)
+				x.Cmds[0].Args = append(x.Cmds[0].Args, t...)
+			}
+		} else if x, ok := n.(*parse.CommandNode); ok {
+
+			var shouldInclude bool
+			visit(x, hasIdentifier(&shouldInclude, "fields"))
+
+			if shouldInclude {
+				converter := &parse.VariableNode{
+					NodeType: parse.NodeVariable,
+					Ident: []string{
+						"$", "SQLGConverter",
+					},
+				}
+				t := append([]parse.Node{}, x.Args[1:]...)
+				x.Args = append(x.Args[:1], converter)
+				x.Args = append(x.Args, t...)
+			}
+		}
+		return true
+	}
+	visit(t.Tree.Root, transformFields)
+
 	return t.Tree.Root.String(), nil
 }
 
@@ -316,12 +389,12 @@ func visit(n parse.Node, fn func(parse.Node) bool) bool {
 		}
 	}
 	if l, ok := n.(*parse.RangeNode); ok {
-		visit(l.Pipe, fn)
-		if l.List != nil {
-			visit(l.List, fn)
+		visit(l.BranchNode.Pipe, fn)
+		if l.BranchNode.List != nil {
+			visit(l.BranchNode.List, fn)
 		}
-		if l.ElseList != nil {
-			visit(l.ElseList, fn)
+		if l.BranchNode.ElseList != nil {
+			visit(l.BranchNode.ElseList, fn)
 		}
 	}
 	if l, ok := n.(*parse.ActionNode); ok {
@@ -338,6 +411,14 @@ func visit(n parse.Node, fn func(parse.Node) bool) bool {
 	}
 	if l, ok := n.(*parse.CommandNode); ok {
 		for _, a := range l.Args {
+			visit(a, fn)
+		}
+	}
+	if l, ok := n.(*parse.PipeNode); ok {
+		for _, a := range l.Decl {
+			visit(a, fn)
+		}
+		for _, a := range l.Cmds {
 			visit(a, fn)
 		}
 	}

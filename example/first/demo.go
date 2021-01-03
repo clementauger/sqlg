@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/clementauger/sqlg/example/first/model"
 	sqlg "github.com/clementauger/sqlg/runtime"
 )
@@ -86,6 +87,16 @@ func (m *myDatastore) DeleteAuthor2(id int) (count int64, err error) {
 
 func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
 	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} ) VALUES ( {{vals .a "id"}} )`).InsertedID(id)
+	return
+}
+
+func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
+	m.Exec(`UPDATE authors SET
+		{{$fields := fields .a "id"}}
+		{{range $i, $field := $fields}}
+			{{$field.SQL | print}} = {{$field.Value}} {{comma $i (len $fields) }}
+		{{end}}
+		 WHERE id = {{.a.ID}}`)
 	return
 }
 

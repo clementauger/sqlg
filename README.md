@@ -119,6 +119,25 @@ func (m *myDatastore) CreateAuthors(a []model.Author) (err error) {
 }
 ```
 
+To generate an update sql statements you can proceed with
+
+```go
+func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
+	m.Exec(`UPDATE authors SET
+		{{range $sql, $value := fields .a "id"}}
+			{{$sql | print}} = {{$value}}
+		{{end}}
+		 WHERE id = {{.id}}`)
+	return
+}
+```
+
+It generates
+
+```sql
+UPDATE authors SET bio = ? WHERE id = ?
+```
+
 When you need special syntax per engine, use build tags
 
 This is a query written for `postgresql`

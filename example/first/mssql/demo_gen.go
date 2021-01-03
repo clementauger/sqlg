@@ -57,6 +57,14 @@ var queryTemplates410ea3 = map[string]*template.Template{
 	"myDatastore__GetSomeY": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM y`,
 	)),
+	"myDatastore__UpdateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`UPDATE authors SET
+		{{$fields := fields $.SQLGConverter .a "id"}}
+		{{range $i, $field := $fields}}
+			{{$field.SQL | print}} = {{$field.Value | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
+		{{end}}
+		 WHERE id = {{.a.ID | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
 }
 
 var rawQueries410ea3 = map[string]string{
@@ -88,6 +96,7 @@ type MyDatastoreIface interface {
 	GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error)
 	GetSomeY(ctx context.Context, db sqlg.Querier, u model.Y) (param0 []model.Y, err error)
 	ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error)
+	UpdateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (err error)
 	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
 	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
 	DeleteManyAuthors(ctx context.Context, db sqlg.Execer, ids []int) (_ []model.Author, err error)
@@ -633,5 +642,38 @@ func (m *MyDatastore) ProductUpdate(ctx context.Context, db sqlg.Querier) (name 
 		return
 	}
 	err = rows410ea3.Err()
+	return
+}
+
+func (m *MyDatastore) UpdateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (err error) {
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
+	{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
+			"SQLGConverter": m.Converter,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
+			"a":             a,
+			"err":           err,
+		}
+		err = queryTemplates410ea3["myDatastore__UpdateAuthor"].Execute(&query410ea3, templateInput410ea3)
+		if err != nil {
+			return
+		}
+		sqlQuery410ea3 = query410ea3.String()
+
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "UpdateAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "UpdateAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		defer func() {
+			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "UpdateAuthor", err)
+		}()
+	}
+
+	_, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
+	if err != nil {
+		return
+	}
 	return
 }
