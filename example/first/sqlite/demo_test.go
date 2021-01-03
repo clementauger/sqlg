@@ -14,23 +14,6 @@ import (
 func TestCreateAuthor(t *testing.T) {
 	var store store.MyDatastore
 
-	ctx := context.Background()
-	db := &db{}
-	var a model.Author
-	store.CreateAuthor(ctx, db, a)
-	wantQuery := `INSERT INTO authors ( bio ) VALUES ( ? )`
-	if db.gotQuery != wantQuery {
-		t.Fatalf("invalid query\nwanted=%q\ngot   =%q", wantQuery, db.gotQuery)
-	}
-	gotValue := db.gotArgs[0]
-	if wantedValue, gotOk := db.gotArgs[0].(string); !gotOk {
-		t.Fatalf("invalid argument type at index %v\nwanted=%T\ngot   =%T", 0, wantedValue, gotValue)
-	}
-}
-
-func TestCreateAuthorWithMock(t *testing.T) {
-	var store store.MyDatastore
-
 	db, mock, err := sqlmock.New(
 		sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual),
 	)
@@ -54,5 +37,4 @@ func TestCreateAuthorWithMock(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-
 }

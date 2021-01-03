@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/clementauger/sqlg/example/first/model"
 	store "github.com/clementauger/sqlg/example/first/mssql"
 )
@@ -14,22 +15,27 @@ import (
 func TestCreateAuthor(t *testing.T) {
 	var store store.MyDatastore
 
+	db, mock, err := sqlmock.New(
+		sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual),
+	)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec("INSERT INTO authors ( bio ) VALUES ( @p0 )").
+		WithArgs(sql.NamedArg{Name:"p0", Value: ""}).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// now we execute our method
 	ctx := context.Background()
-	db := &db{}
 	var a model.Author
-	store.CreateAuthor(ctx, db, a)
-	wantQuery := `INSERT INTO authors ( bio ) VALUES ( @p0 )`
-	if db.gotQuery != wantQuery {
-		t.Fatalf("invalid query\nwanted=%q\ngot   =%q", wantQuery, db.gotQuery)
+	_, err = store.CreateAuthor(ctx, db, a)
+	if err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
-	for i, a := range db.gotArgs {
-		if x, ok := a.(sql.NamedArg); !ok {
-			t.Fatalf("invalid argument value at index %v\nwanted=%T\ngot   =%T", i, x, a)
-		}
-	}
-	wantName := "p0"
-	gotName := db.gotArgs[0].(sql.NamedArg).Name
-	if gotName != wantName {
-		t.Fatalf("invalid argument name at index %v\nwanted=%q\ngot   =%q", 0, wantName, gotName)
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
