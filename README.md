@@ -139,6 +139,23 @@ It generates
 UPDATE authors SET bio = ? WHERE id = ?
 ```
 
+This also works
+
+```go
+func (m *myDatastore) CreateAuthor2(a model.Author) (id int64, err error) {
+	m.Exec(`INSERT INTO authors
+		{{$fields := fields .a "id"}}
+		( {{range $i, $field := $fields}}
+			{{$field.SQL | print}} {{comma $i (len $fields) }}
+		{{end}} )
+		VALUES
+		( {{range $i, $field := $fields}}
+			{{$field.Value}} {{comma $i (len $fields) }}
+		{{end}} ) `).InsertedID(id)
+	return
+}
+```
+
 When you need special syntax per engine, use build tags
 
 This is a query written for `postgresql`

@@ -90,6 +90,19 @@ func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
 	return
 }
 
+func (m *myDatastore) CreateAuthor2(a model.Author) (id int64, err error) {
+	m.Exec(`INSERT INTO authors
+		{{$fields := fields .a "id"}}
+		( {{range $i, $field := $fields}}
+			{{$field.SQL | print}} {{comma $i (len $fields) }}
+		{{end}} )
+		VALUES
+		( {{range $i, $field := $fields}}
+			{{$field.Value}} {{comma $i (len $fields) }}
+		{{end}} ) `).InsertedID(id)
+	return
+}
+
 func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
 	m.Exec(`UPDATE authors SET
 		{{$fields := fields .a "id"}}
