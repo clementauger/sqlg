@@ -7,6 +7,7 @@ import (
 	"go/types"
 	"log"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/clementauger/sqlg/runtime"
@@ -321,7 +322,13 @@ func generateTypeInterface(fileObjects map[string]FileObjects, pkgPath, typName 
 	ifaceName := tName + "Iface"
 	out += fmt.Sprintf("// %v is an interface of %v\n", ifaceName, tName)
 	out += fmt.Sprintf("type %v interface{\n", ifaceName)
-	for _, f := range fileObjects {
+	files := []string{}
+	for fpath := range fileObjects {
+		files = append(files, fpath)
+	}
+	sort.Strings(files)
+	for _, fpath := range files {
+		f := fileObjects[fpath]
 		if f.PackagePath != pkgPath {
 			continue
 		}
