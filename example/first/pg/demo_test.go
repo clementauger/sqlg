@@ -4,9 +4,10 @@ package pg_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/clementauger/sqlg/example/first/model"
 	store "github.com/clementauger/sqlg/example/first/pg"
-	"testing"
 )
 
 func TestCreateAuthor(t *testing.T) {
@@ -16,16 +17,12 @@ func TestCreateAuthor(t *testing.T) {
 	db := &db{}
 	var a model.Author
 	store.CreateAuthor(ctx, db, a)
-	wantQuery := `INSERT INTO authors ( id,bio ) VALUES ( $0,$1 )`
+	wantQuery := `INSERT INTO authors ( bio ) VALUES ( $0 )`
 	if db.gotQuery != wantQuery {
 		t.Fatalf("invalid query\nwanted=%q\ngot   =%q", wantQuery, db.gotQuery)
 	}
 	gotValue := db.gotArgs[0]
-	if wantedValue, gotOk := db.gotArgs[0].(int); !gotOk {
+	if wantedValue, gotOk := db.gotArgs[0].(string); !gotOk {
 		t.Fatalf("invalid argument type at index %v\nwanted=%T\ngot   =%T", 0, wantedValue, gotValue)
-	}
-	gotValue = db.gotArgs[1]
-	if wantedValue, gotOk := db.gotArgs[1].(string); !gotOk {
-		t.Fatalf("invalid argument type at index %v\nwanted=%T\ngot   =%T", 1, wantedValue, gotValue)
 	}
 }

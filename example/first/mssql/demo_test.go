@@ -5,9 +5,10 @@ package mssql_test
 import (
 	"context"
 	"database/sql"
+	"testing"
+
 	"github.com/clementauger/sqlg/example/first/model"
 	store "github.com/clementauger/sqlg/example/first/mssql"
-	"testing"
 )
 
 func TestCreateAuthor(t *testing.T) {
@@ -17,7 +18,7 @@ func TestCreateAuthor(t *testing.T) {
 	db := &db{}
 	var a model.Author
 	store.CreateAuthor(ctx, db, a)
-	wantQuery := `INSERT INTO authors ( id,bio ) VALUES ( @p0,@p1 )`
+	wantQuery := `INSERT INTO authors ( bio ) VALUES ( @p0 )`
 	if db.gotQuery != wantQuery {
 		t.Fatalf("invalid query\nwanted=%q\ngot   =%q", wantQuery, db.gotQuery)
 	}
