@@ -166,6 +166,18 @@ func (c colPrinting) String() string {
 	}
 	var cols []string
 	r := reflect.ValueOf(c.v)
+	if r.Kind() == reflect.Ptr {
+		r = r.Elem()
+	} else if r.Kind() == reflect.Slice {
+		if r.Len() == 0 {
+			r = reflect.Zero(r.Type().Elem())
+		} else {
+			r = r.Index(0)
+		}
+	}
+	if r.Kind() != reflect.Struct {
+		r = r.Elem()
+	}
 	for i := 0; i < r.Type().NumField(); i++ {
 		f := r.Type().Field(i)
 		sf := f.Name

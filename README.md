@@ -107,12 +107,14 @@ It comes with functions like `cols(someStructValue interface{}, notFields... str
 
 It tries to be useful with some helpers like `comma(index, max)` `prefix(string, colPrinting)`
 
+Below will generate a bulk insert command
+
 ```go
 func (m *myDatastore) CreateAuthors(a []model.Author) (err error) {
-	m.Exec(`INSERT INTO authors as alias ({{cols .a "id" | prefix "alias"}})
+	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} )
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{$a.Bio}} ) {{comma $i $a}}
+		 ( {{vals $a "id"}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`)
 	return

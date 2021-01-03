@@ -124,7 +124,17 @@ func (m *myDatastore) CreateAuthors(a []model.Author) (err error) {
 	m.Exec(`INSERT INTO authors (bio)
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{$a.Bio}} ) {{comma $i $a}}
+		 ( {{$a.Bio}} ) {{comma $i (len $.a)}}
+		{{end}}
+	`)
+	return
+}
+
+func (m *myDatastore) CreateAuthors2(a []model.Author) (err error) {
+	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} )
+		VALUES
+		{{range $i, $a := .a}}
+		 ( {{vals $a "id"}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`)
 	return
