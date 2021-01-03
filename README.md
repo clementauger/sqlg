@@ -227,11 +227,11 @@ type myDatastore struct {
 it adds corresponding expressions at runtime
 
 ```go
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
-		defer func() {
-			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", err)
-		}()
+m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
+m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
+defer func() {
+	m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", err)
+}()
 ```
 
 If can also generates and return query iterators, useful when working with large data sets
