@@ -256,7 +256,7 @@ for it.Next() {
 fmt.Println("err:", it.Err())
 ```
 
-You write test using the neat dd api
+You write test using the neat http://github.com/DATA-DOG/go-sqlmock api
 
 ```go
 
