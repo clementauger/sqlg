@@ -73,9 +73,15 @@ func (m MyDatastore) GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a 
 }
 ```
 
+The sql query becomes
+
+```sql
+SELECT * FROM authors WHERE id=?
+```
+
 It attempts to provide support around the work of writing maintenable sql queries with maximum control.
 
-Queries are parsed as `go/templates` at runtime to generate an appropriate sql queries.
+Queries are parsed as `go/templates` at runtime to generate an appropriate sql queries using some helpers.
 
 ```go
 func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
@@ -96,7 +102,7 @@ When a query is templated, it recieves input and output function parameters as a
 
 It comes with functions like `cols(someStructValue interface{}, notFields... string)` to map a struct properties list into their corrsponding sql columns.
   Conversevely `{{vals .a "id"}}` is an helper to list values of a struct properties list except some fields.
-  Those values are recorded to be passes as query arguments when invoking `db.Query` or `db.Exec` methods.
+  Those values are recorded to be passed as query arguments when invoking `db.Query` or `db.Exec` methods.
   Those values are printed with their corresponding placeholder syntax within the query.
 
 It tries to be useful with some helpers like `comma(index, max)` `prefix(string, colPrinting)`
@@ -132,7 +138,37 @@ func (m myDatastore) DeleteManyAuthors(ids []int) (ab []model.Author, err error)
 }
 ```
 
-Other engines are supported (`mssql mysql oracle sqlite`).
+Postgresql is provided a special function `pqArray` to emit a `pq.Array` value.
+
+When using `mssql` engine, values are automatically converted to `sql.NamedArg` and the indexed placeholder are generated at runtime.
+
+so the query become
+
+```sql
+INSERT INTO authors ( id,bio ) VALUES ( @p0,@p1 )
+```
+
+Some specific functions are available to cast the value to an `sql.Valuer` with template helpers such
+
+```go
+out["datetime"] = func(s time.Time) interface{} {
+  return mssql.DateTime1(s)
+}
+out["datetimeoffset"] = func(s time.Time) interface{} {
+  return mssql.DateTimeOffset(s)
+}
+out["nvarcharmax"] = func(s string) interface{} {
+  return mssql.NVarCharMax(s)
+}
+out["varcharmax"] = func(s string) interface{} {
+  return mssql.VarCharMax(s)
+}
+out["varchar"] = func(s string) interface{} {
+  return mssql.VarChar(s)
+}
+```
+
+Other engines are supported (`mysql oracle sqlite`).
 
 in below examples the same function signature is used for different engines that can t provide exactly the same functionality.
 
@@ -166,7 +202,7 @@ func (m *myDatastore) CreateSomeValues(v model.SomeType) (id int64, err error) {
 }
 ```
 
-Only types embedding an `sql.SQLg` interface will be processed query handlers.
+Only types embedding an `sql.SQLg` interface will be processed as query handlers.
 
 ```go
 // myDatastore stores stuff.
@@ -198,30 +234,6 @@ it adds corresponding expressions at runtime
 		}()
 ```
 
-When using `mssql` values are converted to `sql.NamedArg` automatically and indexed placeholder are generated at runtime.
-
-Some specific functions are available to cast the value to an `sql.Valuer` with template helpers such
-
-```go
-out["datetime"] = func(s time.Time) interface{} {
-  return mssql.DateTime1(s)
-}
-out["datetimeoffset"] = func(s time.Time) interface{} {
-  return mssql.DateTimeOffset(s)
-}
-out["nvarcharmax"] = func(s string) interface{} {
-  return mssql.NVarCharMax(s)
-}
-out["varcharmax"] = func(s string) interface{} {
-  return mssql.VarCharMax(s)
-}
-out["varchar"] = func(s string) interface{} {
-  return mssql.VarChar(s)
-}
-```
-
-Postgresql is provided a special function `pqArray` to emit a `pq.Array` value.
-
 If can also generates and return query iterators, useful when working with large data sets
 
 ```go
@@ -246,7 +258,7 @@ fmt.Println("err:", it.Err())
 
 Consider to put your models into a dedicated folder
 
-Check the example folder.
+Check the [example](https://github.com/clementauger/sqlg/tree/main/example/first) folder.
 
 # Install
 
