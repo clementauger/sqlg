@@ -14,7 +14,7 @@ import (
 	"text/template"
 )
 
-var queryTemplates942046 = map[string]*template.Template{
+var queryTemplatesd36938 = map[string]*template.Template{
 	"myDatastore__CreateSomeValues": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`INSERT INTO sometype ( {{cols .v "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .v "id" "values" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.v | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
 	)),
@@ -23,43 +23,43 @@ var queryTemplates942046 = map[string]*template.Template{
 	)),
 }
 
-var rawQueries942046 = map[string]string{
+var rawQueriesd36938 = map[string]string{
 	"myDatastore__DeleteAuthors": `DELETE FROM authors WHERE bio = ''`,
 }
 
 func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error) {
-	var sqlQuery942046 string
-	SQLGValues942046 := &[]interface{}{}
-	SQLGFlavor942046 := "$n"
+	var sqlQueryd36938 string
+	SQLGValuesd36938 := &[]interface{}{}
+	SQLGFlavord36938 := "$n"
 	{
-		var query942046 bytes.Buffer
-		templateInput942046 := map[string]interface{}{
+		var queryd36938 bytes.Buffer
+		templateInputd36938 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValues942046,
-			"SQLGFlavor":    SQLGFlavor942046,
+			"SQLGValues":    SQLGValuesd36938,
+			"SQLGFlavor":    SQLGFlavord36938,
 			"v":             v,
 			"id":            id,
 			"err":           err,
 		}
-		err = queryTemplates942046["myDatastore__CreateSomeValues"].Execute(&query942046, templateInput942046)
+		err = queryTemplatesd36938["myDatastore__CreateSomeValues"].Execute(&queryd36938, templateInputd36938)
 		if err != nil {
 			return
 		}
-		sqlQuery942046 = query942046.String()
+		sqlQueryd36938 = queryd36938.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateSomeValues", sqlQuery942046, (*SQLGValues942046)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateSomeValues", sqlQuery942046, (*SQLGValues942046)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateSomeValues", sqlQueryd36938, (*SQLGValuesd36938)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateSomeValues", sqlQueryd36938, (*SQLGValuesd36938)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "CreateSomeValues", err)
 		}()
 	}
 
-	var res942046 sql.Result
-	res942046, err = db.ExecContext(ctx, sqlQuery942046, (*SQLGValues942046)...)
+	var resd36938 sql.Result
+	resd36938, err = db.ExecContext(ctx, sqlQueryd36938, (*SQLGValuesd36938)...)
 	if err != nil {
 		return
 	}
-	id, err = res942046.LastInsertId()
+	id, err = resd36938.LastInsertId()
 	if err != nil {
 		return
 	}
@@ -67,16 +67,16 @@ func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v mo
 }
 
 func (m MyDatastore) DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error) {
-	var sqlQuery942046 string
-	sqlQuery942046 = rawQueries942046["myDatastore__DeleteAuthors"]
+	var sqlQueryd36938 string
+	sqlQueryd36938 = rawQueriesd36938["myDatastore__DeleteAuthors"]
 
-	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuery942046)
-	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuery942046)
+	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQueryd36938)
+	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQueryd36938)
 	defer func() {
 		m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", err)
 	}()
 
-	_, err = db.ExecContext(ctx, sqlQuery942046)
+	_, err = db.ExecContext(ctx, sqlQueryd36938)
 	if err != nil {
 		return
 	}
@@ -84,48 +84,48 @@ func (m MyDatastore) DeleteAuthors(ctx context.Context, db sqlg.Execer) (err err
 }
 
 func (m MyDatastore) DeleteManyAuthors(ctx context.Context, db sqlg.Querier, ids []int) (ab []model.Author, err error) {
-	var sqlQuery942046 string
-	SQLGValues942046 := &[]interface{}{}
-	SQLGFlavor942046 := "$n"
+	var sqlQueryd36938 string
+	SQLGValuesd36938 := &[]interface{}{}
+	SQLGFlavord36938 := "$n"
 	{
-		var query942046 bytes.Buffer
-		templateInput942046 := map[string]interface{}{
+		var queryd36938 bytes.Buffer
+		templateInputd36938 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValues942046,
-			"SQLGFlavor":    SQLGFlavor942046,
+			"SQLGValues":    SQLGValuesd36938,
+			"SQLGFlavor":    SQLGFlavord36938,
 			"ids":           ids,
 			"ab":            ab,
 			"err":           err,
 		}
-		err = queryTemplates942046["myDatastore__DeleteManyAuthors"].Execute(&query942046, templateInput942046)
+		err = queryTemplatesd36938["myDatastore__DeleteManyAuthors"].Execute(&queryd36938, templateInputd36938)
 		if err != nil {
 			return
 		}
-		sqlQuery942046 = query942046.String()
+		sqlQueryd36938 = queryd36938.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuery942046, (*SQLGValues942046)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuery942046, (*SQLGValues942046)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQueryd36938, (*SQLGValuesd36938)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQueryd36938, (*SQLGValuesd36938)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", err)
 		}()
 	}
 
-	var rows942046 *sql.Rows
-	rows942046, err = db.QueryContext(ctx, sqlQuery942046, (*SQLGValues942046)...)
+	var rowsd36938 *sql.Rows
+	rowsd36938, err = db.QueryContext(ctx, sqlQueryd36938, (*SQLGValuesd36938)...)
 	if err != nil {
 		return
 	}
-	for rows942046.Next() {
-		var item942046 model.Author
-		err = rows942046.Scan(&item942046.ID, &item942046.Bio)
+	for rowsd36938.Next() {
+		var itemd36938 model.Author
+		err = rowsd36938.Scan(&itemd36938.ID, &itemd36938.Bio)
 		if err != nil {
 			return
 		}
-		ab = append(ab, item942046)
+		ab = append(ab, itemd36938)
 	}
-	if err = rows942046.Close(); err != nil {
+	if err = rowsd36938.Close(); err != nil {
 		return
 	}
-	err = rows942046.Err()
+	err = rowsd36938.Err()
 	return
 }

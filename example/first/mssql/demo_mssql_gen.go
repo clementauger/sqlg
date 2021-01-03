@@ -14,13 +14,13 @@ import (
 	"text/template"
 )
 
-var queryTemplatese1ab94 = map[string]*template.Template{
+var queryTemplates3d2962 = map[string]*template.Template{
 	"myDatastore__DeleteManyAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`DELETE FROM authors WHERE id IN ( {{.ids | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
 	)),
 }
 
-var rawQueriese1ab94 = map[string]string{
+var rawQueries3d2962 = map[string]string{
 	"myDatastore__DeleteAuthors": `DELETE FROM authors WHERE bio = ''`,
 }
 
@@ -30,16 +30,16 @@ func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v mo
 }
 
 func (m *MyDatastore) DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error) {
-	var sqlQuerye1ab94 string
-	sqlQuerye1ab94 = rawQueriese1ab94["myDatastore__DeleteAuthors"]
+	var sqlQuery3d2962 string
+	sqlQuery3d2962 = rawQueries3d2962["myDatastore__DeleteAuthors"]
 
-	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuerye1ab94)
-	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuerye1ab94)
+	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuery3d2962)
+	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", sqlQuery3d2962)
 	defer func() {
 		m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthors", err)
 	}()
 
-	_, err = db.ExecContext(ctx, sqlQuerye1ab94)
+	_, err = db.ExecContext(ctx, sqlQuery3d2962)
 	if err != nil {
 		return
 	}
@@ -47,32 +47,32 @@ func (m *MyDatastore) DeleteAuthors(ctx context.Context, db sqlg.Execer) (err er
 }
 
 func (m *MyDatastore) DeleteManyAuthors(ctx context.Context, db sqlg.Execer, ids []int) (_ []model.Author, err error) {
-	var sqlQuerye1ab94 string
-	SQLGValuese1ab94 := &[]interface{}{}
-	SQLGFlavore1ab94 := "@n"
+	var sqlQuery3d2962 string
+	SQLGValues3d2962 := &[]interface{}{}
+	SQLGFlavor3d2962 := "@n"
 	{
-		var querye1ab94 bytes.Buffer
-		templateInpute1ab94 := map[string]interface{}{
+		var query3d2962 bytes.Buffer
+		templateInput3d2962 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuese1ab94,
-			"SQLGFlavor":    SQLGFlavore1ab94,
+			"SQLGValues":    SQLGValues3d2962,
+			"SQLGFlavor":    SQLGFlavor3d2962,
 			"ids":           ids,
 			"err":           err,
 		}
-		err = queryTemplatese1ab94["myDatastore__DeleteManyAuthors"].Execute(&querye1ab94, templateInpute1ab94)
+		err = queryTemplates3d2962["myDatastore__DeleteManyAuthors"].Execute(&query3d2962, templateInput3d2962)
 		if err != nil {
 			return
 		}
-		sqlQuerye1ab94 = querye1ab94.String()
+		sqlQuery3d2962 = query3d2962.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuerye1ab94, (*SQLGValuese1ab94)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuerye1ab94, (*SQLGValuese1ab94)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuery3d2962, (*SQLGValues3d2962)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", sqlQuery3d2962, (*SQLGValues3d2962)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteManyAuthors", err)
 		}()
 	}
 
-	_, err = db.ExecContext(ctx, sqlQuerye1ab94, (*SQLGValuese1ab94)...)
+	_, err = db.ExecContext(ctx, sqlQuery3d2962, (*SQLGValues3d2962)...)
 	if err != nil {
 		return
 	}

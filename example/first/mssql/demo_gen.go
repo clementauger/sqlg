@@ -14,11 +14,34 @@ import (
 	"text/template"
 )
 
-var queryTemplatesb9d90b = map[string]*template.Template{
+var queryTemplates410ea3 = map[string]*template.Template{
+	"myDatastore__CreateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+	)),
+	"myDatastore__CreateAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`INSERT INTO authors (bio)
+		VALUES
+		{{range $i, $a := .a}}
+		 ( {{$a.Bio | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i $a}}
+		{{end}}
+	`,
+	)),
+	"myDatastore__DeleteAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
 	"myDatastore__DeleteAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT {{cols .a "id" | convert $.SQLGConverter | glue ","}} FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT {{cols .a "id" | prefix "alias." | convert $.SQLGConverter | glue ","}} FROM authors as alias WHERE alias.id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	)),
+	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthorsWihNamedIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
@@ -34,32 +57,9 @@ var queryTemplatesb9d90b = map[string]*template.Template{
 	"myDatastore__GetSomeY": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM y`,
 	)),
-	"myDatastore__CreateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
-	)),
-	"myDatastore__CreateAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors (bio)
-		VALUES
-		{{range $i, $a := .a}}
-		 ( {{$a.Bio | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i $a}}
-		{{end}}
-	`,
-	)),
-	"myDatastore__DeleteAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | convert $.SQLGConverter | glue ","}} FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | prefix "alias." | convert $.SQLGConverter | glue ","}} FROM authors as alias WHERE alias.id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
-	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
-	)),
 }
 
-var rawQueriesb9d90b = map[string]string{
+var rawQueries410ea3 = map[string]string{
 	"myDatastore__GetAuthors": `SELECT * FROM authors`,
 	"myDatastore__ProductUpdate": `UPDATE products SET price = price * 1.10
   WHERE price <= 99.99
@@ -128,38 +128,38 @@ func (it *AuthorIterator) Next() bool {
 }
 
 func (m *MyDatastore) CreateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (id int64, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"a":             a,
 			"id":            id,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__CreateAuthor"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__CreateAuthor"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthor", err)
 		}()
 	}
 
-	var resb9d90b sql.Result
-	resb9d90b, err = db.ExecContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var res410ea3 sql.Result
+	res410ea3, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	id, err = resb9d90b.LastInsertId()
+	id, err = res410ea3.LastInsertId()
 	if err != nil {
 		return
 	}
@@ -167,32 +167,32 @@ func (m *MyDatastore) CreateAuthor(ctx context.Context, db sqlg.Execer, a model.
 }
 
 func (m *MyDatastore) CreateAuthors(ctx context.Context, db sqlg.Execer, a []model.Author) (err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"a":             a,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__CreateAuthors"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__CreateAuthors"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors", err)
 		}()
 	}
 
-	_, err = db.ExecContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	_, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
@@ -200,32 +200,32 @@ func (m *MyDatastore) CreateAuthors(ctx context.Context, db sqlg.Execer, a []mod
 }
 
 func (m *MyDatastore) DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) (err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__DeleteAuthor"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__DeleteAuthor"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor", err)
 		}()
 	}
 
-	_, err = db.ExecContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	_, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
@@ -233,38 +233,38 @@ func (m *MyDatastore) DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) 
 }
 
 func (m *MyDatastore) DeleteAuthor2(ctx context.Context, db sqlg.Execer, id int) (count int64, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"count":         count,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__DeleteAuthor2"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__DeleteAuthor2"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor2", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor2", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor2", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor2", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "DeleteAuthor2", err)
 		}()
 	}
 
-	var resb9d90b sql.Result
-	resb9d90b, err = db.ExecContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var res410ea3 sql.Result
+	res410ea3, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	count, err = resb9d90b.RowsAffected()
+	count, err = res410ea3.RowsAffected()
 	if err != nil {
 		return
 	}
@@ -274,252 +274,252 @@ func (m *MyDatastore) DeleteAuthor2(ctx context.Context, db sqlg.Execer, id int)
 // GetAuthor retrieves
 // an Author by its ID.
 func (m MyDatastore) GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"a":             a,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetAuthor"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetAuthor"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		err = rowsb9d90b.Scan(&a.ID, &a.Bio)
+	for rows410ea3.Next() {
+		err = rows410ea3.Scan(&a.ID, &a.Bio)
 		if err != nil {
 			return
 		}
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m MyDatastore) GetAuthor2(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"a":             a,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetAuthor2"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetAuthor2"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor2", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor2", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor2", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor2", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor2", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		err = rowsb9d90b.Scan(&a.ID, &a.Bio)
+	for rows410ea3.Next() {
+		err = rows410ea3.Scan(&a.ID, &a.Bio)
 		if err != nil {
 			return
 		}
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m MyDatastore) GetAuthor3(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"a":             a,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetAuthor3"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetAuthor3"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor3", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor3", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor3", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor3", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor3", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		err = rowsb9d90b.Scan(&a.ID, &a.Bio)
+	for rows410ea3.Next() {
+		err = rows410ea3.Scan(&a.ID, &a.Bio)
 		if err != nil {
 			return
 		}
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m *MyDatastore) GetAuthors(ctx context.Context, db sqlg.Querier) (a []model.Author, err error) {
-	var sqlQueryb9d90b string
-	sqlQueryb9d90b = rawQueriesb9d90b["myDatastore__GetAuthors"]
+	var sqlQuery410ea3 string
+	sqlQuery410ea3 = rawQueries410ea3["myDatastore__GetAuthors"]
 
-	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthors", sqlQueryb9d90b)
-	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthors", sqlQueryb9d90b)
+	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthors", sqlQuery410ea3)
+	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthors", sqlQuery410ea3)
 	defer func() {
 		m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthors", err)
 	}()
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		var itemb9d90b model.Author
-		err = rowsb9d90b.Scan(&itemb9d90b.ID, &itemb9d90b.Bio)
+	for rows410ea3.Next() {
+		var item410ea3 model.Author
+		err = rows410ea3.Scan(&item410ea3.ID, &item410ea3.Bio)
 		if err != nil {
 			return
 		}
-		a = append(a, itemb9d90b)
+		a = append(a, item410ea3)
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m MyDatastore) GetAuthorsWihIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"it":            it,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetAuthorsWihIterator"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetAuthorsWihIterator"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihIterator", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihIterator", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihIterator", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihIterator", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihIterator", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	it.rows = rowsb9d90b
+	it.rows = rows410ea3
 	return
 }
 
 func (m MyDatastore) GetAuthorsWihNamedIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"id":            id,
 			"it":            it,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetAuthorsWihNamedIterator"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetAuthorsWihNamedIterator"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihNamedIterator", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihNamedIterator", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihNamedIterator", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihNamedIterator", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorsWihNamedIterator", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	it.rows = rowsb9d90b
+	it.rows = rows410ea3
 	return
 }
 
 func (m *MyDatastore) GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"u":             u,
 			"start":         start,
 			"end":           end,
@@ -528,110 +528,110 @@ func (m *MyDatastore) GetSomeAuthors(ctx context.Context, db sqlg.Querier, u mod
 			"param0":        param0,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetSomeAuthors"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetSomeAuthors"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeAuthors", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeAuthors", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeAuthors", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeAuthors", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeAuthors", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		var itemb9d90b model.Author
-		err = rowsb9d90b.Scan(&itemb9d90b.ID, &itemb9d90b.Bio)
+	for rows410ea3.Next() {
+		var item410ea3 model.Author
+		err = rows410ea3.Scan(&item410ea3.ID, &item410ea3.Bio)
 		if err != nil {
 			return
 		}
-		param0 = append(param0, itemb9d90b)
+		param0 = append(param0, item410ea3)
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m *MyDatastore) GetSomeY(ctx context.Context, db sqlg.Querier, u model.Y) (param0 []model.Y, err error) {
-	var sqlQueryb9d90b string
-	SQLGValuesb9d90b := &[]interface{}{}
-	SQLGFlavorb9d90b := "@n"
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
 	{
-		var queryb9d90b bytes.Buffer
-		templateInputb9d90b := map[string]interface{}{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
 			"SQLGConverter": m.Converter,
-			"SQLGValues":    SQLGValuesb9d90b,
-			"SQLGFlavor":    SQLGFlavorb9d90b,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
 			"u":             u,
 			"param0":        param0,
 			"err":           err,
 		}
-		err = queryTemplatesb9d90b["myDatastore__GetSomeY"].Execute(&queryb9d90b, templateInputb9d90b)
+		err = queryTemplates410ea3["myDatastore__GetSomeY"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
 			return
 		}
-		sqlQueryb9d90b = queryb9d90b.String()
+		sqlQuery410ea3 = query410ea3.String()
 
-		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeY", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
-		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeY", sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeY", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeY", sqlQuery410ea3, (*SQLGValues410ea3)...)
 		defer func() {
 			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetSomeY", err)
 		}()
 	}
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b, (*SQLGValuesb9d90b)...)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		var itemb9d90b model.Y
-		err = rowsb9d90b.Scan(&itemb9d90b.W)
+	for rows410ea3.Next() {
+		var item410ea3 model.Y
+		err = rows410ea3.Scan(&item410ea3.W)
 		if err != nil {
 			return
 		}
-		param0 = append(param0, itemb9d90b)
+		param0 = append(param0, item410ea3)
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
 
 func (m *MyDatastore) ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error) {
-	var sqlQueryb9d90b string
-	sqlQueryb9d90b = rawQueriesb9d90b["myDatastore__ProductUpdate"]
+	var sqlQuery410ea3 string
+	sqlQuery410ea3 = rawQueries410ea3["myDatastore__ProductUpdate"]
 
-	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "ProductUpdate", sqlQueryb9d90b)
-	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "ProductUpdate", sqlQueryb9d90b)
+	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "ProductUpdate", sqlQuery410ea3)
+	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "ProductUpdate", sqlQuery410ea3)
 	defer func() {
 		m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "ProductUpdate", err)
 	}()
 
-	var rowsb9d90b *sql.Rows
-	rowsb9d90b, err = db.QueryContext(ctx, sqlQueryb9d90b)
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3)
 	if err != nil {
 		return
 	}
-	for rowsb9d90b.Next() {
-		err = rowsb9d90b.Scan(&name, &price)
+	for rows410ea3.Next() {
+		err = rows410ea3.Scan(&name, &price)
 		if err != nil {
 			return
 		}
 	}
-	if err = rowsb9d90b.Close(); err != nil {
+	if err = rows410ea3.Close(); err != nil {
 		return
 	}
-	err = rowsb9d90b.Err()
+	err = rows410ea3.Err()
 	return
 }
