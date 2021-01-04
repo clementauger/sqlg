@@ -44,13 +44,13 @@ func (m myDatastore) GetAuthorsWihNamedIterator(id int) (it authorIterator, err 
 }
 
 func (m myDatastore) GetAuthor2(id int) (a model.Author, err error) {
-	m.Query(`{{$fields := fields .a "id"}}
+	m.Query(`{{$fields := fields .a}}
 		SELECT {{$fields | cols}} FROM authors WHERE id={{.id}}`)
 	// m.Query(`SELECT {{cols a "id" | convert .SQLGConverter | glue ","}} FROM authors WHERE id={{.id}}`)
 	return
 }
 func (m myDatastore) GetAuthor3(id int) (a model.Author, err error) {
-	m.Query(`{{$fields := fields .a "id"}}
+	m.Query(`{{$fields := fields .a}}
 		SELECT {{$fields | cols | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id}}`)
 	// m.Query(`SELECT {{cols a "id" | prefix "alias" | convert .SQLGConverter | glue ","}} FROM authors WHERE id={{.id}}`)
 	return
@@ -149,6 +149,7 @@ func (m *myDatastore) CreateAuthors3(a []model.Author) (err error) {
 	`)
 	return
 }
+
 func (m *myDatastore) CreateAuthors4(a []model.Author) (err error) {
 	m.Insert("authors", a)
 	return
