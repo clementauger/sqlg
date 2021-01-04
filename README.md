@@ -296,10 +296,10 @@ type myDatastore struct {
 it adds corresponding expressions at runtime
 
 ```go
-m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
-m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", sqlQuery86120a, (*SQLGValues86120a)...)
+m.Logger.Log(<package path>, <method>, <query string>, <query args>...)
+m.Tracer.Begin(<package path>, <method>, <query string>, <query args>...)
 defer func() {
-	m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthor", err)
+	m.Tracer.End(<package path>, <method>, err)
 }()
 ```
 
