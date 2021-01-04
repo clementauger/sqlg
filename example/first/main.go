@@ -78,7 +78,7 @@ func main() {
 	fmt.Println(a)
 	fmt.Println("err:", err)
 
-	authors, err = store.GetSomeAuthors(ctx, db, model.Author{}, 0, 1, "bio", "id")
+	authors, err = store.GetSomeAuthors(ctx, db, []int{0, 1}, 0, 10, "bio", "id")
 	fmt.Println(authors)
 	fmt.Println("err:", err)
 }
