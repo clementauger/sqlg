@@ -752,6 +752,24 @@ func (u userMethod) OutputsOnlyError() bool {
 	return true
 }
 
+func listStructProps(stru *types.Struct) []string {
+	var ret []string
+	for i := 0; i < stru.NumFields(); i++ {
+		f := stru.Field(i)
+		if !f.Exported() {
+			continue
+		}
+		if f.Anonymous() {
+			if x, ok := f.Type().Underlying().(*types.Struct); ok {
+				ret = append(ret, listStructProps(x)...)
+			}
+			continue
+		}
+		ret = append(ret, f.Name())
+	}
+	return ret
+}
+
 func typeToParam(pkgPath string, ty types.Type, p userParam, allowFunc bool) (userParam, error) {
 
 	if s, ok := ty.(*types.Pointer); ok {
@@ -764,17 +782,8 @@ func typeToParam(pkgPath string, ty types.Type, p userParam, allowFunc bool) (us
 					p.GoType += ss.Obj().Pkg().Name() + "."
 				}
 				if stru, ok := ss.Underlying().(*types.Struct); ok {
-					stru.NumFields()
-					for i := 0; i < stru.NumFields(); i++ {
-						f := stru.Field(i)
-						if f.Anonymous() {
-							continue
-						}
-						if !f.Exported() {
-							continue
-						}
-						p.StructProperties = append(p.StructProperties, f.Name())
-					}
+					props := listStructProps(stru)
+					p.StructProperties = append(p.StructProperties, props...)
 				}
 			}
 			p.GoType += ss.Obj().Name()
@@ -790,16 +799,9 @@ func typeToParam(pkgPath string, ty types.Type, p userParam, allowFunc bool) (us
 				if s.Obj().Pkg().Path() != pkgPath {
 					p.GoType = s.Obj().Pkg().Name() + "."
 				}
-				for i := 0; i < stru.NumFields(); i++ {
-					f := stru.Field(i)
-					if f.Anonymous() {
-						continue
-					}
-					if !f.Exported() {
-						continue
-					}
-					p.StructProperties = append(p.StructProperties, f.Name())
-				}
+				props := listStructProps(stru)
+				p.StructProperties = append(p.StructProperties, props...)
+
 			} else if s, ok := ty.(*types.Named); ok {
 				if ss, ok := s.Underlying().(*types.Signature); ok {
 					if !allowFunc {
@@ -838,17 +840,9 @@ func typeToParam(pkgPath string, ty types.Type, p userParam, allowFunc bool) (us
 					p.GoType += ss.Obj().Pkg().Name() + "."
 				}
 				if stru, ok := ss.Underlying().(*types.Struct); ok {
-					stru.NumFields()
-					for i := 0; i < stru.NumFields(); i++ {
-						f := stru.Field(i)
-						if f.Anonymous() {
-							continue
-						}
-						if !f.Exported() {
-							continue
-						}
-						p.StructProperties = append(p.StructProperties, f.Name())
-					}
+					props := listStructProps(stru)
+					p.StructProperties = append(p.StructProperties, props...)
+
 				} else {
 					return p, fmt.Errorf("invalid signature variable type %s", ty.String())
 				}
