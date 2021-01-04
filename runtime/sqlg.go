@@ -9,8 +9,10 @@ import (
 
 type SQLg interface {
 	// Prepared(shouldPrepare bool) SQLg
+	WithParam(name string, value interface{}) SQLg
 	Query(sql string)
 	Exec(sql string) resulter
+	Insert(intoTable string, value interface{}, notFields ...string) resulter
 }
 type resulter interface {
 	AffectedRows(dest interface{}) SQLg

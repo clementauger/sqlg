@@ -22,9 +22,9 @@ func TestTransform(t *testing.T) {
 	{{.y | pqArray}}`,
 			out: `text
 	{{range $i, $a := .a}}
-	 ( {{$a.Bio | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $a)}}
+	 ( {{$a.Bio | val $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $a)}}
 	{{end}}
-	{{.y | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+	{{.y | pqArray | val $.SQLGValues $.SQLGFlavor}}`,
 		},
 		input{
 			src: `UPDATE authors SET
@@ -36,9 +36,19 @@ WHERE id = {{.a.id}}`,
 			out: `UPDATE authors SET
 {{$fields := fields $.SQLGConverter .a "id"}}
 {{range $i, $field := $fields}}
-	{{$field.SQL | print}} = {{$field.Value | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
+	{{$field.SQL | print}} = {{$field.Value | val $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
 {{end}}
-WHERE id = {{.a.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+WHERE id = {{.a.id | val $.SQLGValues $.SQLGFlavor}}`,
+		},
+		input{
+			src: `UPDATE authors SET
+{{$fields := fields .a "id"}}
+{{$fields | update}}
+WHERE id = {{.a.id}}`,
+			out: `UPDATE authors SET
+{{$fields := fields $.SQLGConverter .a "id"}}
+{{$fields | update $.SQLGValues $.SQLGFlavor}}
+WHERE id = {{.a.id | val $.SQLGValues $.SQLGFlavor}}`,
 		},
 	}
 

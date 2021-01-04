@@ -15,6 +15,9 @@ func (m myDatastore) DeleteAuthors() (err error) {
 }
 
 func (m *myDatastore) CreateSomeValues(v model.SomeType) (id int64, err error) {
-	m.Exec(`INSERT INTO sometype ( {{cols .v "id"}} ) VALUES ( {{vals .v "id" "values"}}, {{.v | pqArray}} )`).InsertedID(id)
+	m.Exec(`{{$fields := fields .v "id"}}
+		{{$vals := fields .v "id" "v"}}
+		INSERT INTO sometype ( {{$fields | cols}} )
+		VALUES ( {{$vals | vals}}, {{.v | pqArray}} )`).InsertedID(id)
 	return
 }

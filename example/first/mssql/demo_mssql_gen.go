@@ -16,7 +16,7 @@ import (
 
 var queryTemplates3d2962 = map[string]*template.Template{
 	"myDatastore__DeleteManyAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id IN ( {{.ids | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+		`DELETE FROM authors WHERE id IN ( {{.ids | val $.SQLGValues $.SQLGFlavor}} )`,
 	)),
 }
 

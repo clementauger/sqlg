@@ -16,10 +16,13 @@ import (
 
 var queryTemplatesd36938 = map[string]*template.Template{
 	"myDatastore__CreateSomeValues": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO sometype ( {{cols .v "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .v "id" "values" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.v | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+		`{{$fields := fields $.SQLGConverter .v "id"}}
+		{{$vals := fields $.SQLGConverter .v "id" "v"}}
+		INSERT INTO sometype ( {{$fields | cols}} )
+		VALUES ( {{$vals | vals $.SQLGValues $.SQLGFlavor}}, {{.v | pqArray | val $.SQLGValues $.SQLGFlavor}} )`,
 	)),
 	"myDatastore__DeleteManyAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id ANY ( {{.ids | pqArray | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}::int[] ) RETURNING *`,
+		`DELETE FROM authors WHERE id ANY ( {{.ids | pqArray | val $.SQLGValues $.SQLGFlavor}}::int[] ) RETURNING *`,
 	)),
 }
 

@@ -3,6 +3,10 @@
 `sqlg` is a command line utility to generate boilerplate sql instructions when
 using go `sql` package.
 
+It aims at:
+- handling as much db engine as possible.
+- With as little interference with sql as possible
+
 It parses `.go` file which contains such kind of functions
 
 ```go
@@ -85,7 +89,8 @@ Queries are parsed as `go/templates` at runtime to generate an appropriate sql q
 
 ```go
 func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
-	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} ) VALUES ( {{vals .a "id"}} )`).InsertedID(id)
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} ) VALUES ( {{$fields | vals}} )`).InsertedID(id)
 	return
 }
 ```
@@ -111,10 +116,11 @@ Below will generate a bulk insert command
 
 ```go
 func (m *myDatastore) CreateAuthors(a []model.Author) (err error) {
-	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} )
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} )
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{vals $a "id"}} ) {{comma $i (len $.a)}}
+		 ( {{$fields | vals $a}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`)
 	return
@@ -125,12 +131,10 @@ To generate an update sql statements you can proceed with
 
 ```go
 func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
-	m.Exec(`UPDATE authors SET
-		{{$fields := fields .a "id"}}
-		{{range $i, $field := $fields}}
-			{{$field.SQL | print}} = {{$field.Value}} {{comma $i (len $fields) }}
-		{{end}}
-		 WHERE id = {{.a.ID}}`)
+	m.Exec(`{{$fields := fields .a "id"}}
+		UPDATE authors SET
+		{{$fields | update .a}}
+		WHERE id = {{.a.ID}}`)
 	return
 }
 ```
@@ -145,8 +149,8 @@ This also works
 
 ```go
 func (m *myDatastore) CreateAuthor2(a model.Author) (id int64, err error) {
-	m.Exec(`INSERT INTO authors
-		{{$fields := fields .a "id"}}
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors
 		( {{range $i, $field := $fields}}
 			{{$field.SQL | print}} {{comma $i (len $fields) }}
 		{{end}} )
@@ -175,6 +179,12 @@ func (m myDatastore) DeleteManyAuthors(ids []int) (ab []model.Author, err error)
 	m.Query(`DELETE FROM authors WHERE id ANY ( {{.ids | pqArray}}::int[] ) RETURNING *`)
 	return
 }
+```
+
+For `ids := []int{0,1,2}`, it generates
+
+```sql
+DELETE FROM authors WHERE id IN ( $0::int[] )
 ```
 
 Postgresql is provided a special function `pqArray` to emit a `pq.Array` value.
@@ -228,6 +238,12 @@ func (m *myDatastore) DeleteManyAuthors(ids []int) (_ []model.Author, err error)
 	m.Exec(`DELETE FROM authors WHERE id IN ( {{.ids}} )`)
 	return
 }
+```
+
+For `ids := []int{0,1,2}`, it generates
+
+```sql
+DELETE FROM authors WHERE id IN ( ?,?,? )
 ```
 
 When needed, you can mark a method as unsupported

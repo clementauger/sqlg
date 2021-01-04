@@ -16,73 +16,81 @@ import (
 
 var queryTemplates410ea3 = map[string]*template.Template{
 	"myDatastore__CreateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} ) VALUES ( {{vals $.SQLGConverter .a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} )`,
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} ) VALUES ( {{$fields | vals $.SQLGValues $.SQLGFlavor .a}} )`,
 	)),
 	"myDatastore__CreateAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors
-		{{$fields := fields $.SQLGConverter .a "id"}}
-		( {{range $i, $field := $fields}}
-			{{$field.SQL | print}} {{comma $i (len $fields)}}
-		{{end}} )
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		INSERT INTO authors
+		( {{$fields | cols}} )
 		VALUES
-		( {{range $i, $field := $fields}}
-			{{$field.Value | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
-		{{end}} ) `,
+		( {{$fields | vals $.SQLGValues $.SQLGFlavor .a}} ) `,
 	)),
 	"myDatastore__CreateAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`INSERT INTO authors (bio)
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{$a.Bio | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $.a)}}
+		 ( {{$a.Bio | val $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`,
 	)),
 	"myDatastore__CreateAuthors2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`INSERT INTO authors ( {{cols .a "id" | convert $.SQLGConverter | glue ","}} )
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} )
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{vals $.SQLGConverter $a "id" | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} ) {{comma $i (len $.a)}}
+		 ( {{$fields | vals $.SQLGValues $.SQLGFlavor $a}} ) {{comma $i (len $.a)}}
+		{{end}}
+	`,
+	)),
+	"myDatastore__CreateAuthors3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} )
+		VALUES
+		{{range $i, $a := .a}}
+		 ( {{$fields | vals $.SQLGValues $.SQLGFlavor $a}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`,
 	)),
 	"myDatastore__DeleteAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`DELETE FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__DeleteAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`DELETE FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`DELETE FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | convert $.SQLGConverter | glue ","}} FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		SELECT {{$fields | cols}} FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT {{cols .a "id" | prefix "alias." | convert $.SQLGConverter | glue ","}} FROM authors as alias WHERE alias.id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		SELECT {{$fields | cols | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthorsWihNamedIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`SELECT * FROM authors WHERE id={{.id | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetSomeAuthors": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM authors
+		WHERE id IN ({{.ids | val $.SQLGValues $.SQLGFlavor}})
 		GROUP BY {{.groupby | print}}
 		ORDER BY {{.orderby | raw}}
-		LIMIT {{.start | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}, {{.end | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}
+		LIMIT {{.start | val $.SQLGValues $.SQLGFlavor}}, {{.end | val $.SQLGValues $.SQLGFlavor}}
 		`,
 	)),
 	"myDatastore__GetSomeY": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM y`,
 	)),
 	"myDatastore__UpdateAuthor": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`UPDATE authors SET
-		{{$fields := fields $.SQLGConverter .a "id"}}
-		{{range $i, $field := $fields}}
-			{{$field.SQL | print}} = {{$field.Value | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}} {{comma $i (len $fields)}}
-		{{end}}
-		 WHERE id = {{.a.ID | collect $.SQLGValues $.SQLGFlavor | placeholder $.SQLGValues $.SQLGFlavor}}`,
+		`{{$fields := fields $.SQLGConverter .a "id"}}
+		UPDATE authors SET
+		 {{$fields | update $.SQLGValues $.SQLGFlavor .a}}
+		 WHERE id = {{.a.ID | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 }
 
@@ -106,6 +114,8 @@ type MyDatastoreIface interface {
 	CreateAuthor2(ctx context.Context, db sqlg.Execer, a model.Author) (id int64, err error)
 	CreateAuthors(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	CreateAuthors2(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
+	CreateAuthors3(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
+	CreateAuthors4(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) (err error)
 	DeleteAuthor2(ctx context.Context, db sqlg.Execer, id int) (count int64, err error)
 	GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error)
@@ -114,7 +124,7 @@ type MyDatastoreIface interface {
 	GetAuthors(ctx context.Context, db sqlg.Querier) (a []model.Author, err error)
 	GetAuthorsWihIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error)
 	GetAuthorsWihNamedIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error)
-	GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error)
+	GetSomeAuthors(ctx context.Context, db sqlg.Querier, ids []int, start int, end int, orderby string, groupby string) (param0 []model.Author, err error)
 	GetSomeY(ctx context.Context, db sqlg.Querier, u model.Y) (param0 []model.Y, err error)
 	ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error)
 	UpdateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (err error)
@@ -298,6 +308,43 @@ func (m *MyDatastore) CreateAuthors2(ctx context.Context, db sqlg.Execer, a []mo
 	if err != nil {
 		return
 	}
+	return
+}
+
+func (m *MyDatastore) CreateAuthors3(ctx context.Context, db sqlg.Execer, a []model.Author) (err error) {
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "?"
+	{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
+			"SQLGConverter": m.Converter,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
+			"a":             a,
+			"err":           err,
+		}
+		err = queryTemplates410ea3["myDatastore__CreateAuthors3"].Execute(&query410ea3, templateInput410ea3)
+		if err != nil {
+			return
+		}
+		sqlQuery410ea3 = query410ea3.String()
+
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors3", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors3", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		defer func() {
+			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "CreateAuthors3", err)
+		}()
+	}
+
+	_, err = db.ExecContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (m *MyDatastore) CreateAuthors4(ctx context.Context, db sqlg.Execer, a []model.Author) (err error) {
 	return
 }
 
@@ -612,7 +659,7 @@ func (m MyDatastore) GetAuthorsWihNamedIterator(ctx context.Context, db sqlg.Que
 	return
 }
 
-func (m *MyDatastore) GetSomeAuthors(ctx context.Context, db sqlg.Querier, u model.Author, start int, end int, orderby string, groupby string) (param0 []model.Author, err error) {
+func (m *MyDatastore) GetSomeAuthors(ctx context.Context, db sqlg.Querier, ids []int, start int, end int, orderby string, groupby string) (param0 []model.Author, err error) {
 	var sqlQuery410ea3 string
 	SQLGValues410ea3 := &[]interface{}{}
 	SQLGFlavor410ea3 := "?"
@@ -622,7 +669,7 @@ func (m *MyDatastore) GetSomeAuthors(ctx context.Context, db sqlg.Querier, u mod
 			"SQLGConverter": m.Converter,
 			"SQLGValues":    SQLGValues410ea3,
 			"SQLGFlavor":    SQLGFlavor410ea3,
-			"u":             u,
+			"ids":           ids,
 			"start":         start,
 			"end":           end,
 			"orderby":       orderby,

@@ -126,3 +126,34 @@ func TestUpdateAuthor(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestInQuery(t *testing.T) {
+	var store store.MyDatastore
+
+	db, mock, err := sqlmock.New(
+		sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual),
+	)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery(`SELECT * FROM authors
+        		WHERE id IN (?,?,?)
+        		GROUP BY bio
+        		ORDER BY bio
+        		LIMIT ?, ?`).
+		WithArgs(0, 1, 2, 0, 5).
+		WillReturnRows(mock.NewRows([]string{"", "bio"}))
+
+	// now we execute our method
+	ctx := context.Background()
+	_, err = store.GetSomeAuthors(ctx, db, []int{0, 1, 2}, 0, 5, "bio", "bio")
+	if err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}

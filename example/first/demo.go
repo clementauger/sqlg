@@ -44,12 +44,14 @@ func (m myDatastore) GetAuthorsWihNamedIterator(id int) (it authorIterator, err 
 }
 
 func (m myDatastore) GetAuthor2(id int) (a model.Author, err error) {
-	m.Query(`SELECT {{cols .a "id"}} FROM authors WHERE id={{.id}}`)
+	m.Query(`{{$fields := fields .a "id"}}
+		SELECT {{$fields | cols}} FROM authors WHERE id={{.id}}`)
 	// m.Query(`SELECT {{cols a "id" | convert .SQLGConverter | glue ","}} FROM authors WHERE id={{.id}}`)
 	return
 }
 func (m myDatastore) GetAuthor3(id int) (a model.Author, err error) {
-	m.Query(`SELECT {{cols .a "id" | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id}}`)
+	m.Query(`{{$fields := fields .a "id"}}
+		SELECT {{$fields | cols | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id}}`)
 	// m.Query(`SELECT {{cols a "id" | prefix "alias" | convert .SQLGConverter | glue ","}} FROM authors WHERE id={{.id}}`)
 	return
 }
@@ -59,8 +61,9 @@ func (m *myDatastore) GetAuthors() (a []model.Author, err error) {
 	return
 }
 
-func (m *myDatastore) GetSomeAuthors(u model.Author, start, end int, orderby, groupby string) ([]model.Author, error) {
+func (m *myDatastore) GetSomeAuthors(ids []int, start, end int, orderby, groupby string) ([]model.Author, error) {
 	m.Query(`SELECT * FROM authors
+		WHERE id IN ({{.ids}})
 		GROUP BY {{.groupby | print}}
 		ORDER BY {{.orderby | raw}}
 		LIMIT {{.start }}, {{.end }}
@@ -86,29 +89,24 @@ func (m *myDatastore) DeleteAuthor2(id int) (count int64, err error) {
 }
 
 func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
-	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} ) VALUES ( {{vals .a "id"}} )`).InsertedID(id)
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} ) VALUES ( {{$fields | vals .a}} )`).InsertedID(id)
 	return
 }
 
 func (m *myDatastore) CreateAuthor2(a model.Author) (id int64, err error) {
-	m.Exec(`INSERT INTO authors
-		{{$fields := fields .a "id"}}
-		( {{range $i, $field := $fields}}
-			{{$field.SQL | print}} {{comma $i (len $fields) }}
-		{{end}} )
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors
+		( {{$fields | cols}} )
 		VALUES
-		( {{range $i, $field := $fields}}
-			{{$field.Value}} {{comma $i (len $fields) }}
-		{{end}} ) `).InsertedID(id)
+		( {{$fields | vals .a}} ) `).InsertedID(id)
 	return
 }
 
 func (m *myDatastore) UpdateAuthor(a model.Author) (err error) {
-	m.Exec(`UPDATE authors SET
-		{{$fields := fields .a "id"}}
-		{{range $i, $field := $fields}}
-			{{$field.SQL | print}} = {{$field.Value}} {{comma $i (len $fields) }}
-		{{end}}
+	m.Exec(`{{$fields := fields .a "id"}}
+		UPDATE authors SET
+		 {{$fields | update .a}}
 		 WHERE id = {{.a.ID}}`)
 	return
 }
@@ -131,11 +129,27 @@ func (m *myDatastore) CreateAuthors(a []model.Author) (err error) {
 }
 
 func (m *myDatastore) CreateAuthors2(a []model.Author) (err error) {
-	m.Exec(`INSERT INTO authors ( {{cols .a "id"}} )
+	m.Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} )
 		VALUES
 		{{range $i, $a := .a}}
-		 ( {{vals $a "id"}} ) {{comma $i (len $.a)}}
+		 ( {{$fields | vals $a}} ) {{comma $i (len $.a)}}
 		{{end}}
 	`)
+	return
+}
+func (m *myDatastore) CreateAuthors3(a []model.Author) (err error) {
+	m.WithParam("b", model.Author{}).
+		Exec(`{{$fields := fields .a "id"}}
+		INSERT INTO authors ( {{$fields | cols}} )
+		VALUES
+		{{range $i, $a := .a}}
+		 ( {{$fields | vals $a}} ) {{comma $i (len $.a)}}
+		{{end}}
+	`)
+	return
+}
+func (m *myDatastore) CreateAuthors4(a []model.Author) (err error) {
+	m.Insert("authors", a)
 	return
 }
