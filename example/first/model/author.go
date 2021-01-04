@@ -5,6 +5,11 @@ type Author struct {
 	Bio string
 }
 
+type AuthorCount struct {
+	Author
+	Count int
+}
+
 type SomeType struct {
 	ID     int
 	Values []int

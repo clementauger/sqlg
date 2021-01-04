@@ -31,6 +31,13 @@ func (m myDatastore) GetAuthor(id int) (a model.Author, err error) {
 	return
 }
 
+// GetAuthorCount retrieves
+// Author and count.
+func (m myDatastore) GetAuthorCount(id int) (a model.AuthorCount, err error) {
+	m.Query(`SELECT *, COUNT(*) as count FROM authors WHERE id={{.id}}`)
+	return
+}
+
 func (m myDatastore) GetAuthorsWihIterator(id int) (it func() (model.Author, error), err error) {
 	m.Query(`SELECT * FROM authors WHERE id={{.id}}`)
 	return

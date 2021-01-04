@@ -69,6 +69,9 @@ var queryTemplates410ea3 = map[string]*template.Template{
 		`{{$fields := fields $.SQLGConverter .a}}
 		SELECT {{$fields | cols | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
+	"myDatastore__GetAuthorCount": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
+		`SELECT *, COUNT(*) as count FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
+	)),
 	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
 		`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
@@ -120,6 +123,7 @@ type MyDatastoreIface interface {
 	GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error)
 	GetAuthor2(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error)
 	GetAuthor3(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error)
+	GetAuthorCount(ctx context.Context, db sqlg.Querier, id int) (a model.AuthorCount, err error)
 	GetAuthors(ctx context.Context, db sqlg.Querier) (a []model.Author, err error)
 	GetAuthorsWihIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error)
 	GetAuthorsWihNamedIterator(ctx context.Context, db sqlg.Querier, id int) (it AuthorIterator, err error)
@@ -542,6 +546,53 @@ func (m MyDatastore) GetAuthor3(ctx context.Context, db sqlg.Querier, id int) (a
 	}
 	for rows410ea3.Next() {
 		err = rows410ea3.Scan(&a.ID, &a.Bio)
+		if err != nil {
+			return
+		}
+	}
+	if err = rows410ea3.Close(); err != nil {
+		return
+	}
+	err = rows410ea3.Err()
+	return
+}
+
+// GetAuthorCount retrieves
+// Author and count.
+func (m MyDatastore) GetAuthorCount(ctx context.Context, db sqlg.Querier, id int) (a model.AuthorCount, err error) {
+	var sqlQuery410ea3 string
+	SQLGValues410ea3 := &[]interface{}{}
+	SQLGFlavor410ea3 := "@n"
+	{
+		var query410ea3 bytes.Buffer
+		templateInput410ea3 := map[string]interface{}{
+			"SQLGConverter": m.Converter,
+			"SQLGValues":    SQLGValues410ea3,
+			"SQLGFlavor":    SQLGFlavor410ea3,
+			"id":            id,
+			"a":             a,
+			"err":           err,
+		}
+		err = queryTemplates410ea3["myDatastore__GetAuthorCount"].Execute(&query410ea3, templateInput410ea3)
+		if err != nil {
+			return
+		}
+		sqlQuery410ea3 = query410ea3.String()
+
+		m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorCount", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorCount", sqlQuery410ea3, (*SQLGValues410ea3)...)
+		defer func() {
+			m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "GetAuthorCount", err)
+		}()
+	}
+
+	var rows410ea3 *sql.Rows
+	rows410ea3, err = db.QueryContext(ctx, sqlQuery410ea3, (*SQLGValues410ea3)...)
+	if err != nil {
+		return
+	}
+	for rows410ea3.Next() {
+		err = rows410ea3.Scan(&a.ID, &a.Bio, &a.Count)
 		if err != nil {
 			return
 		}
