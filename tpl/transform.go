@@ -134,7 +134,12 @@ func (c fieldPrinter) printCols() string {
 		}
 		cols = append(cols, s)
 	}
-	return strings.TrimSuffix(strings.Join(cols, c.glue), c.glue)
+
+	glue := c.glue
+	if c.glue == "" {
+		glue = ","
+	}
+	return strings.TrimSuffix(strings.Join(cols, glue), glue)
 }
 
 func (c fieldPrinter) printValue() string {
