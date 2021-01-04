@@ -6,6 +6,7 @@ using go `sql` package.
 It aims at:
 - handling as much db engine as possible.
 - With as little interference with sql as possible
+- remain small. It currently is less than 5K loc.
 
 It parses `.go` file which contains such kind of functions
 
