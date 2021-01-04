@@ -77,6 +77,12 @@ func (m MyDatastore) GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a 
 }
 ```
 
+The sql template becomes
+
+```sql
+`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
+```
+
 The sql query becomes
 
 ```sql
@@ -105,12 +111,12 @@ INSERT INTO authors ( bio ) VALUES ( ? )
 When a query is templated, it recieves input and output function parameters as a `map[string]interface{}`
   so you can use those values to build the sql output.
 
-It comes with functions like `cols(someStructValue interface{}, notFields... string)` to map a struct properties list into their corrsponding sql columns.
-  Conversevely `{{vals .a "id"}}` is an helper to list values of a struct properties list except some fields.
+It comes with functions like `cols(someStructValue interface{}, fields []fieldAndValue) fieldPrinter` to map a struct properties list into their corrsponding sql columns.
+  Conversevely `{{vals .a $fields}} fieldPrinter` is an helper to list values of a struct properties as listed by `$fields` selection.
   Those values are recorded to be passed as query arguments when invoking `db.Query` or `db.Exec` methods.
   Those values are printed with their corresponding placeholder syntax within the query.
 
-It tries to be useful with some helpers like `comma(index, max)` `prefix(string, colPrinting)`
+It tries to be useful with some helpers like `comma(index, max)` `prefix(string, fieldPrinter)`
 
 Below will generate a bulk insert command
 
