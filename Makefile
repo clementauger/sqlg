@@ -8,3 +8,5 @@ test:
 	(cd example/first; go run .)
 gen:
 	(cd example/first; go generate -x -tags=sqlg .)
+cloc:
+	cloc --exclude-dir=example --include-ext=go --by-file .
