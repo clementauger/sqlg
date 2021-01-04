@@ -15,8 +15,8 @@ type SQLg interface {
 	Insert(intoTable string, value interface{}, notFields ...string) resulter
 }
 type resulter interface {
-	AffectedRows(dest interface{}) SQLg
-	InsertedID(dest interface{}) SQLg
+	AffectedRows(dest interface{}) resulter
+	InsertedID(dest interface{}) resulter
 }
 
 type Execer interface {
