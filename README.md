@@ -96,7 +96,11 @@ Queries are parsed as `go/templates` at runtime to generate an appropriate sql q
 ```go
 func (m *myDatastore) CreateAuthor(a model.Author) (id int64, err error) {
 	m.Exec(`{{$fields := fields .a "id"}}
-		INSERT INTO authors ( {{$fields | cols}} ) VALUES ( {{$fields | vals}} )`).InsertedID(id)
+		INSERT INTO authors
+			( {{$fields | cols}} )
+		VALUES
+			( {{$fields | vals}} )
+	`).InsertedID(id)
 	return
 }
 ```
