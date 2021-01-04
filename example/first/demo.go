@@ -150,7 +150,12 @@ func (m *myDatastore) CreateAuthors3(a []model.Author) (err error) {
 	return
 }
 
-func (m *myDatastore) CreateAuthors4(a []model.Author) (err error) {
-	m.Insert("authors", a)
-	return
-}
+// func (m *myDatastore) CreateAuthorsCRUD(a []model.Author) (id int64, err error) {
+// 	m.Insert("authors", a, "id").InsertedID(id)
+// 	return
+// }
+//
+// func (m *myDatastore) UpdateAuthorsCRUD(a []model.Author) (count int64, err error) {
+// 	m.Update("authors", a, "id").AffectedRows(count)
+// 	return
+// }

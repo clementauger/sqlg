@@ -115,7 +115,6 @@ type MyDatastoreIface interface {
 	CreateAuthors(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	CreateAuthors2(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	CreateAuthors3(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
-	CreateAuthors4(ctx context.Context, db sqlg.Execer, a []model.Author) (err error)
 	DeleteAuthor(ctx context.Context, db sqlg.Execer, id int) (err error)
 	DeleteAuthor2(ctx context.Context, db sqlg.Execer, id int) (count int64, err error)
 	GetAuthor(ctx context.Context, db sqlg.Querier, id int) (a model.Author, err error)
@@ -342,10 +341,6 @@ func (m *MyDatastore) CreateAuthors3(ctx context.Context, db sqlg.Execer, a []mo
 	if err != nil {
 		return
 	}
-	return
-}
-
-func (m *MyDatastore) CreateAuthors4(ctx context.Context, db sqlg.Execer, a []model.Author) (err error) {
 	return
 }
 

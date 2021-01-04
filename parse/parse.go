@@ -136,6 +136,7 @@ type templateParam struct {
 	Name string
 	Expr string
 }
+
 type userParam struct {
 	IsPtr            bool
 	IsSlice          bool
@@ -351,40 +352,6 @@ func parsePackage(pkg *types.Package, fset *token.FileSet, syntax []*ast.File) (
 					um.FileName = methFile
 					um.Comment = fnDecl.Doc.Text()
 
-					funcCalls := browseBodyFunc(fnDecl, receiverName)
-
-					queryCall := funcCalls.ByName("Query").Last()
-					execCall := funcCalls.ByName("Exec").Last()
-					if queryCall != nil {
-						um.Mode = modeQuery
-						um.Query = queryCall.Params[0]
-					} else if execCall != nil {
-						um.Mode = modeExec
-						um.Query = execCall.Params[0]
-					}
-					if queryCall == nil && execCall == nil {
-						errExpr := lookupFinalErrExpr(fnDecl)
-						um.FinalErr = errExpr
-					}
-					insertedIDCall := funcCalls.ByName("InsertedID").Last()
-					if insertedIDCall != nil {
-						um.InsertedID = insertedIDCall.Params[0]
-					}
-					affectedRowsCall := funcCalls.ByName("AffectedRows").Last()
-					if affectedRowsCall != nil {
-						um.AffectedRows = affectedRowsCall.Params[0]
-					}
-					withParamCalls := funcCalls.ByName("WithParam")
-					for _, w := range withParamCalls {
-						um.TemplateParams = append(um.TemplateParams, templateParam{
-							Name: w.Params[0],
-							Expr: w.Params[1],
-						})
-					}
-					// os.Exit(1)
-					// ast.Fprint(os.Stderr, token.NewFileSet(),
-					// 	fnDecl.Body.List, notObject)
-
 					um.Tracer = u.Tracer
 					um.Logger = u.Logger
 					um.CaseConverter = u.CaseConverter
@@ -412,6 +379,42 @@ func parsePackage(pkg *types.Package, fset *token.FileSet, syntax []*ast.File) (
 					if err != nil {
 						return nil, err
 					}
+
+					funcCalls := browseBodyFunc(fnDecl, receiverName)
+
+					queryCall := funcCalls.ByName("Query").Last()
+					execCall := funcCalls.ByName("Exec").Last()
+					if queryCall != nil {
+						um.Mode = modeQuery
+						um.Query = queryCall.Params[0]
+					} else if execCall != nil {
+						um.Mode = modeExec
+						um.Query = execCall.Params[0]
+					}
+
+					if um.Mode == "" {
+						errExpr := lookupFinalErrExpr(fnDecl)
+						um.FinalErr = errExpr
+					}
+
+					insertedIDCall := funcCalls.ByName("InsertedID").Last()
+					if insertedIDCall != nil {
+						um.InsertedID = insertedIDCall.Params[0]
+					}
+					affectedRowsCall := funcCalls.ByName("AffectedRows").Last()
+					if affectedRowsCall != nil {
+						um.AffectedRows = affectedRowsCall.Params[0]
+					}
+					withParamCalls := funcCalls.ByName("WithParam")
+					for _, w := range withParamCalls {
+						um.TemplateParams = append(um.TemplateParams, templateParam{
+							Name: w.Params[0],
+							Expr: w.Params[1],
+						})
+					}
+					// os.Exit(1)
+					// ast.Fprint(os.Stderr, token.NewFileSet(),
+					// 	fnDecl.Body.List, notObject)
 
 					buildTags, ok := lookupForFileBuildags(fset, syntax, meth.Obj())
 					if !ok {

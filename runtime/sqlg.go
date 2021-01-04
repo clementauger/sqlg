@@ -8,11 +8,11 @@ import (
 )
 
 type SQLg interface {
-	// Prepared(shouldPrepare bool) SQLg
 	WithParam(name string, value interface{}) SQLg
 	Query(sql string)
 	Exec(sql string) resulter
-	Insert(intoTable string, value interface{}, notFields ...string) resulter
+	// Insert(intoTable string, value interface{}, pkfields ...string) resulter
+	// Update(intoTable string, value interface{}, pkfields ...string) resulter
 }
 type resulter interface {
 	AffectedRows(dest interface{}) resulter
