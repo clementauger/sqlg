@@ -7,8 +7,10 @@ import (
 	"go/format"
 	"go/importer"
 	"go/parser"
+	"go/printer"
 	"go/token"
 	"go/types"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -110,25 +112,30 @@ var (
 )
 
 type userMethod struct {
-	FileName     string
-	Name         string
-	Prepared     bool
-	InsertedID   string
-	AffectedRows string
-	Mode         sqlMode
-	Query        string
-	InParams     []userParam
-	OutParams    []userParam
-	Receiver     userParam
-	Comment      string
+	FileName string
+	Name     string // method name
+	// Prepared     bool
+	Mode           sqlMode
+	InsertedID     string          // output variable name
+	AffectedRows   string          // output variable name
+	Query          string          // the sql string template
+	TemplateParams []templateParam // withParam
+	InParams       []userParam     // function signature params
+	OutParams      []userParam     // function signature params
+	Receiver       userParam
+	Comment        string
 
-	FinalErr string
+	FinalErr string // the final error expression when no Query or Exec calls
 
 	Tracer        *types.Var
 	Logger        *types.Var
 	CaseConverter *types.Var
 }
 
+type templateParam struct {
+	Name string
+	Expr string
+}
 type userParam struct {
 	IsPtr            bool
 	IsSlice          bool
@@ -336,13 +343,47 @@ func parsePackage(pkg *types.Package, fset *token.FileSet, syntax []*ast.File) (
 						return ret, fmt.Errorf("failed to find function body of %q", meth.Obj().Name())
 					}
 
-					opts := browseBodyFunc(fnDecl, receiverName)
+					// opts := browseBodyFunc(fnDecl, receiverName)
 
 					methFile := fset.File(meth.Obj().Pos()).Name()
 					var um userMethod
 					um.Name = meth.Obj().Name()
 					um.FileName = methFile
 					um.Comment = fnDecl.Doc.Text()
+
+					funcCalls := browseBodyFunc(fnDecl, receiverName)
+
+					queryCall := funcCalls.ByName("Query").Last()
+					execCall := funcCalls.ByName("Exec").Last()
+					if queryCall != nil {
+						um.Mode = modeQuery
+						um.Query = queryCall.Params[0]
+					} else if execCall != nil {
+						um.Mode = modeExec
+						um.Query = execCall.Params[0]
+					}
+					if queryCall == nil && execCall == nil {
+						errExpr := lookupFinalErrExpr(fnDecl)
+						um.FinalErr = errExpr
+					}
+					insertedIDCall := funcCalls.ByName("InsertedID").Last()
+					if insertedIDCall != nil {
+						um.InsertedID = insertedIDCall.Params[0]
+					}
+					affectedRowsCall := funcCalls.ByName("AffectedRows").Last()
+					if affectedRowsCall != nil {
+						um.AffectedRows = affectedRowsCall.Params[0]
+					}
+					withParamCalls := funcCalls.ByName("WithParam")
+					for _, w := range withParamCalls {
+						um.TemplateParams = append(um.TemplateParams, templateParam{
+							Name: w.Params[0],
+							Expr: w.Params[1],
+						})
+					}
+					// os.Exit(1)
+					// ast.Fprint(os.Stderr, token.NewFileSet(),
+					// 	fnDecl.Body.List, notObject)
 
 					um.Tracer = u.Tracer
 					um.Logger = u.Logger
@@ -356,28 +397,6 @@ func parsePackage(pkg *types.Package, fset *token.FileSet, syntax []*ast.File) (
 						um.Receiver.GoType = "*"
 					}
 					um.Receiver.GoType += obj.Name()
-
-					if q, ok := opts["Query"]; ok && len(q) > 0 {
-						um.Mode = modeQuery
-						um.Query = q[0]
-					} else if q, ok := opts["Exec"]; ok && len(q) > 0 {
-						um.Mode = modeExec
-						um.Query = q[0]
-					}
-					if q, ok := opts["Prepared"]; ok && len(q) > 0 {
-						um.Prepared = q[0] == "true"
-					}
-					if q, ok := opts["InsertedID"]; ok && len(q) > 0 {
-						um.InsertedID = q[0]
-					}
-					if q, ok := opts["AffectedRows"]; ok && len(q) > 0 {
-						um.AffectedRows = q[0]
-					}
-
-					if _, ok := opts["Query"]; !ok {
-						errExpr := lookupFinalErrExpr(fnDecl)
-						um.FinalErr = errExpr
-					}
 
 					var err error
 					um.InParams, err = tuplesToParams(obj.Pkg().Path(), sig.Params(), true)
@@ -443,54 +462,85 @@ func lookupForFileBuildags(fset *token.FileSet, files []*ast.File, obj types.Obj
 	return text, true
 }
 
-// Browse body function top statements
-// looking for calls to the sqlg runtime functions.
-// record func calls and their arguments into a map
-// of [function]=> {arguments...}
-func browseBodyFunc(fnDecl *ast.FuncDecl, receiverName string) map[string][]string {
-	opts := map[string][]string{}
+func notObject(s string, v reflect.Value) bool {
+	if s == "Obj" {
+		return false
+	}
+	return ast.NotNilFilter(s, v)
+}
+
+type funcCall struct {
+	Name   string
+	Params []string
+}
+type funcCalls []funcCall
+
+func (f funcCalls) ByName(n string) funcCalls {
+	var ret funcCalls
+	for _, ff := range f {
+		if ff.Name == n {
+			ret = append(ret, ff)
+		}
+	}
+	return ret
+}
+func (f funcCalls) Last() *funcCall {
+	if len(f) > 0 {
+		return &f[len(f)-1]
+	}
+	return nil
+}
+
+func browseBodyFunc(fnDecl *ast.FuncDecl, receiverName string) funcCalls {
+	var funcs []funcCall
 	for _, n := range fnDecl.Body.List {
+		// log.Printf("n  %T\n", n)
 		if x, ok := n.(*ast.ExprStmt); ok {
-			var currentFunc string
-			// in k.Z() ast.Inspect will first present the Ident of k, then Z.
-			// So we look for chain calls that starts with an ident.Value == receiverName,
-			// If the first ident found is not the receiver, return false, and stop browsing this branch.
-			// If first ident is the receiver name, identify function calls and their arguments
-			// to record them into the opts map.
-			// Unless validIdent is true, dont process the node and keep browsing the branch.
-			var foundIdent bool
-			var validIdent bool
+			// log.Printf("x.X %T\n", x.X)
+			var validRcvr bool
 			ast.Inspect(x, func(n ast.Node) bool {
-				if x, ok := n.(*ast.Ident); ok {
-					if !foundIdent {
-						foundIdent = true
-						if x.Name == receiverName {
-							validIdent = true
-							return true
+				if n != nil {
+					if x, ok := n.(*ast.CallExpr); ok {
+						// log.Printf("x %T\n", n)
+						// printer.Fprint(os.Stderr, token.NewFileSet(), x.Fun)
+						// ast.Fprint(os.Stderr, token.NewFileSet(), x.Fun, notObject)
+						if y, ok := x.Fun.(*ast.SelectorExpr); ok {
+							if i, ok := y.X.(*ast.Ident); ok {
+								validRcvr = i.Name == receiverName
+							}
 						}
-					}
-					if !validIdent {
-						return false
-					}
-				}
-				if validIdent {
-					switch x := n.(type) {
-					case *ast.Ident:
-						if validFunc(x.Name) {
-							currentFunc = x.Name
-						} else {
-							opts[currentFunc] = append(opts[currentFunc], x.Name)
-						}
-					case *ast.BasicLit:
-						opts[currentFunc] = append(opts[currentFunc], x.Value)
 					}
 				}
 				return true
 			})
+
+			if validRcvr {
+				ast.Inspect(x, func(n ast.Node) bool {
+					if n != nil {
+						if x, ok := n.(*ast.CallExpr); ok {
+							// log.Printf("x %T\n", n)
+							if y, ok := x.Fun.(*ast.SelectorExpr); ok {
+								var call funcCall
+								call.Name = y.Sel.Name
+								for _, a := range x.Args {
+									var b bytes.Buffer
+									printer.Fprint(&b, token.NewFileSet(), a)
+									call.Params = append(call.Params, b.String())
+								}
+								funcs = append(funcs, call)
+								// ast.Fprint(os.Stderr, token.NewFileSet(), x.Args, notObject)
+							}
+						}
+					}
+					return true
+				})
+			}
+
 		}
 	}
-	return opts
+	return funcs
 }
+
 func lookupFinalErrExpr(fnDecl *ast.FuncDecl) string {
 	var out string
 	for _, n := range fnDecl.Body.List {

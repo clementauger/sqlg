@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"fmt"
 	"go/format"
@@ -99,6 +100,9 @@ func generateMethod(meth userMethod, engine, queryTemplates, rawQueries string) 
 				if h.Name != "_" {
 					out += fmt.Sprintf("%q:%v,\n", h.Name, h.Name)
 				}
+			}
+			for _, y := range meth.TemplateParams {
+				out += fmt.Sprintf("%v:%v,\n", y.Name, y.Expr)
 			}
 			out += "}\n"
 			// execute the template query
@@ -522,13 +526,23 @@ func Generate(fileObjects map[string]FileObjects, engine string) (map[string]str
 			fContent += k + "\n"
 		}
 
+		var noComment string
+		sc := bufio.NewScanner(strings.NewReader(fContent))
+		for sc.Scan() {
+			line := sc.Text()
+			if strings.HasPrefix(line, "// ") {
+				continue
+			}
+			noComment += line + "\n"
+		}
+
 		// generate import statements
 		imports := f.Imports()
 		imports["bytes"] = ""
-		if strings.Contains(fContent, "sql.") {
+		if strings.Contains(noComment, "sql.") {
 			imports["database/sql"] = ""
 		}
-		if strings.Contains(fContent, "fmt.") {
+		if strings.Contains(noComment, "fmt.") {
 			imports["fmt"] = ""
 		}
 		imports["text/template"] = ""
