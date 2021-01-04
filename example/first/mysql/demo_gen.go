@@ -62,11 +62,11 @@ var queryTemplates410ea3 = map[string]*template.Template{
 		`SELECT * FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor2": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`{{$fields := fields $.SQLGConverter .a "id"}}
+		`{{$fields := fields $.SQLGConverter .a}}
 		SELECT {{$fields | cols}} FROM authors WHERE id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthor3": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
-		`{{$fields := fields $.SQLGConverter .a "id"}}
+		`{{$fields := fields $.SQLGConverter .a}}
 		SELECT {{$fields | cols | prefix "alias."}} FROM authors as alias WHERE alias.id={{.id | val $.SQLGValues $.SQLGFlavor}}`,
 	)),
 	"myDatastore__GetAuthorsWihIterator": template.Must(template.New("").Funcs(tpl.FuncMap()).Parse(
@@ -323,6 +323,7 @@ func (m *MyDatastore) CreateAuthors3(ctx context.Context, db sqlg.Execer, a []mo
 			"SQLGFlavor":    SQLGFlavor410ea3,
 			"a":             a,
 			"err":           err,
+			"b":             model.Author{},
 		}
 		err = queryTemplates410ea3["myDatastore__CreateAuthors3"].Execute(&query410ea3, templateInput410ea3)
 		if err != nil {
