@@ -4,8 +4,14 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/clementauger/sqlg/example/first/model"
 )
+
+// CreateTable authors.
+func (m myDatastore) CreateTable() (err error) {
+	return fmt.Errorf("todo")
+}
 
 func (m *myDatastore) DeleteManyAuthors(ids []int) (_ []model.Author, err error) {
 	m.Exec(`DELETE FROM authors WHERE id IN ( {{.ids}} )`)

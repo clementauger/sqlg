@@ -29,6 +29,12 @@ func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v mo
 	return
 }
 
+// CreateTable authors.
+func (m MyDatastore) CreateTable(ctx context.Context, db sqlg.Execer) (err error) {
+	err = fmt.Errorf("todo")
+	return
+}
+
 func (m *MyDatastore) DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error) {
 	var sqlQuery3d2962 string
 	sqlQuery3d2962 = rawQueries3d2962["myDatastore__DeleteAuthors"]

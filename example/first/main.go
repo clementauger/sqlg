@@ -35,11 +35,17 @@ func main() {
 
 	db, _ := sql.Open("sqlite3", "./sqlite-database.db")
 	defer db.Close()
-	createTable(db)
+
 	store := store.MyDatastore{}
 	store.Logger.Configure(defaultLogger{})
 
 	ctx := context.Background()
+
+	err = store.CreateTable(ctx, db)
+	if err != nil {
+		log.Fatalf("create table: %v", err)
+	}
+
 	var id int64
 	id, err = store.CreateAuthor(ctx, db, model.Author{Bio: "bio"})
 	if err != nil {
@@ -81,18 +87,4 @@ func main() {
 	authors, err = store.GetSomeAuthors(ctx, db, []int{0, 1}, 0, 10, "bio", "id")
 	fmt.Println(authors)
 	fmt.Println("err:", err)
-}
-
-func createTable(db *sql.DB) {
-	createStudentTableSQL := `CREATE TABLE authors (
-		id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-		bio TEXT
-	  );`
-
-	statement, err := db.Prepare(createStudentTableSQL)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	statement.Exec()
-	log.Println("student table created")
 }

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/clementauger/sqlg/example/first/model"
 	sqlg "github.com/clementauger/sqlg/runtime"
 	tpl "github.com/clementauger/sqlg/tpl/pg"
@@ -66,6 +67,12 @@ func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v mo
 	if err != nil {
 		return
 	}
+	return
+}
+
+// CreateTable authors.
+func (m MyDatastore) CreateTable(ctx context.Context, db sqlg.Execer) (err error) {
+	err = fmt.Errorf("todo")
 	return
 }
 

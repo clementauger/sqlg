@@ -21,11 +21,35 @@ var queryTemplates12fb19 = map[string]*template.Template{
 }
 
 var rawQueries12fb19 = map[string]string{
+	"myDatastore__CreateTable": `
+		CREATE TABLE authors (
+			id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+			bio TEXT
+	  )
+	`,
 	"myDatastore__DeleteAuthors": `DELETE FROM authors WHERE bio = ''`,
 }
 
 func (m *MyDatastore) CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error) {
 	err = fmt.Errorf("unsupported")
+	return
+}
+
+// CreateTable authors.
+func (m MyDatastore) CreateTable(ctx context.Context, db sqlg.Execer) (err error) {
+	var sqlQuery12fb19 string
+	sqlQuery12fb19 = rawQueries12fb19["myDatastore__CreateTable"]
+
+	m.Logger.Log("github.com/clementauger/sqlg/example/first/myDatastore", "CreateTable", sqlQuery12fb19)
+	m.Tracer.Begin("github.com/clementauger/sqlg/example/first/myDatastore", "CreateTable", sqlQuery12fb19)
+	defer func() {
+		m.Tracer.End("github.com/clementauger/sqlg/example/first/myDatastore", "CreateTable", err)
+	}()
+
+	_, err = db.ExecContext(ctx, sqlQuery12fb19)
+	if err != nil {
+		return
+	}
 	return
 }
 

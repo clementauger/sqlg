@@ -132,6 +132,7 @@ type MyDatastoreIface interface {
 	ProductUpdate(ctx context.Context, db sqlg.Querier) (name string, price int, err error)
 	UpdateAuthor(ctx context.Context, db sqlg.Execer, a model.Author) (err error)
 	CreateSomeValues(ctx context.Context, db sqlg.Execer, v model.SomeType) (id int64, err error)
+	CreateTable(ctx context.Context, db sqlg.Execer) (err error)
 	DeleteAuthors(ctx context.Context, db sqlg.Execer) (err error)
 	DeleteManyAuthors(ctx context.Context, db sqlg.Execer, ids []int) (_ []model.Author, err error)
 }

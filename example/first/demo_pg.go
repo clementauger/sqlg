@@ -2,7 +2,16 @@
 
 package main
 
-import "github.com/clementauger/sqlg/example/first/model"
+import (
+	"fmt"
+
+	"github.com/clementauger/sqlg/example/first/model"
+)
+
+// CreateTable authors.
+func (m myDatastore) CreateTable() (err error) {
+	return fmt.Errorf("todo")
+}
 
 func (m myDatastore) DeleteManyAuthors(ids []int) (ab []model.Author, err error) {
 	m.Query(`DELETE FROM authors WHERE id ANY ( {{.ids | pqArray}}::int[] ) RETURNING *`)
