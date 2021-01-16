@@ -390,6 +390,12 @@ func generateIterator(meth userMethod) string {
 	`, itName)
 
 	out += fmt.Sprintf(`
+	func(x %v) Close() error {
+		return x.rows.Close()
+	}
+	`, itName)
+
+	out += fmt.Sprintf(`
 	func(x %v) All() (ret []%v) {
 		for x.Next() {
 			ret = append(ret,x.Value())
@@ -406,6 +412,7 @@ func generateIterator(meth userMethod) string {
 	out += fmt.Sprintf(`func(it *%v) Next() ( bool) {
 		`, itName)
 	out += fmt.Sprintf(`if !it.rows.Next(){
+			it.rows.Close()
 			return false
 		}
 		`)

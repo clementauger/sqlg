@@ -150,6 +150,10 @@ func (x AuthorIterator) Err() error {
 	return x.rows.Err()
 }
 
+func (x AuthorIterator) Close() error {
+	return x.rows.Close()
+}
+
 func (x AuthorIterator) All() (ret []model.Author) {
 	for x.Next() {
 		ret = append(ret, x.Value())
@@ -161,6 +165,7 @@ func (it *AuthorIterator) Value() model.Author {
 }
 func (it *AuthorIterator) Next() bool {
 	if !it.rows.Next() {
+		it.rows.Close()
 		return false
 	}
 	it.err = it.rows.Scan(&(it.value.ID), &(it.value.Bio))
